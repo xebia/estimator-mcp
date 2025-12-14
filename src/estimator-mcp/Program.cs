@@ -46,6 +46,7 @@ public class Program
                 services.AddMcpServer()
                     .WithTools<InstructionsTool>()
                     .WithTools<CatalogTool>()
+                    .WithTools<CalculateEstimateTool>()
                     .WithStdioServerTransport();
             });
 
