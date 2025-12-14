@@ -1,6 +1,7 @@
 ﻿using EstimatorMcp.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using Serilog;
 using Serilog.Events;
@@ -41,20 +42,17 @@ public class Program
         {
             Log.Information("Starting estimator-mcp MCP server");
 
-            var builder = Host.CreateDefaultBuilder(args);
+            var builder = Host.CreateApplicationBuilder(args);
 
-            // Use Serilog for file logging
-            builder.UseSerilog();
+            // Clear default logging providers and use Serilog (file-only, no console to stdout)
+            builder.Logging.ClearProviders();
+            builder.Services.AddSerilog();
 
-            builder.ConfigureServices((context, services) =>
-            {
-                // Configure MCP server with stdio transport and register tools
-                services.AddMcpServer()
-                    .WithTools<InstructionsTool>()
-                    .WithTools<CatalogTool>()
-                    .WithTools<CalculateEstimateTool>()
-                    .WithStdioServerTransport();
-            });
+            builder.Services.AddMcpServer()
+                .WithTools<InstructionsTool>()
+                .WithTools<CatalogTool>()
+                .WithTools<CalculateEstimateTool>()
+                .WithStdioServerTransport();
 
             var host = builder.Build();
             
