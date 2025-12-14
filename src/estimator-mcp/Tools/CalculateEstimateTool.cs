@@ -233,7 +233,7 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
 
             logger.LogInformation("[CalculateEstimateTool.CalculateEstimate] Calculated estimates for {Count} features, total {Hours} hours", 
                 features.Count, 
-                result.summary.overallTotalHours);
+                result.summary.overallAiAdjustedHours);
 
             return JsonSerializer.Serialize(result, new JsonSerializerOptions
             {

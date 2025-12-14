@@ -11,6 +11,12 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        // Get logs directory from environment variable, fallback to current directory
+        var logsPath = Environment.GetEnvironmentVariable("ESTIMATOR_LOGS_PATH") ?? "logs";
+        
+        // Ensure logs directory exists
+        Directory.CreateDirectory(logsPath);
+        
         // Configure Serilog for file logging only (no console output to avoid interfering with stdio)
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -21,7 +27,7 @@ public class Program
             .Enrich.WithThreadId()
             .Enrich.WithEnvironmentName()
             .WriteTo.File(
-                path: "logs/estimator-mcp-.log",
+                path: Path.Combine(logsPath, "estimator-mcp-.log"),
                 rollingInterval: RollingInterval.Day,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 retainedFileCountLimit: 7,
