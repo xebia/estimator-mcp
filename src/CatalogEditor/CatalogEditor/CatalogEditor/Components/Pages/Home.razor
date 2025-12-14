@@ -1,0 +1,58 @@
+﻿@page "/"
+
+<PageTitle>Catalog Editor</PageTitle>
+
+<h1>Catalog Editor</h1>
+
+<p>Welcome to the MCP Estimator Catalog Editor. Use this application to manage your project estimation catalog.</p>
+
+<div class="row mt-4">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><span class="bi bi-people-fill"></span> Roles</h5>
+                <p class="card-text">Manage implementation roles with Copilot productivity multipliers.</p>
+                <a href="/roles" class="btn btn-primary">Manage Roles</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><span class="bi bi-box-fill"></span> Countables</h5>
+                <p class="card-text">Define countable items that contribute to project scope.</p>
+                <a href="/countables" class="btn btn-primary">Manage Countables</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><span class="bi bi-gear-fill"></span> Features</h5>
+                <p class="card-text">Manage typical work items and technical activities.</p>
+                <a href="/features" class="btn btn-primary">Manage Features</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><span class="bi bi-list-nested-nav-menu"></span> Catalog</h5>
+                <p class="card-text">Map features to role estimates using t-shirt sizing.</p>
+                <a href="/catalog" class="btn btn-primary">Manage Catalog</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mt-4">
+    <h5>About the Catalog</h5>
+    <p>
+        This catalog stores all configuration in a timestamped JSON file at <code>data/catalogs/catalog-{timestamp}.json</code>.
+        Each catalog entry stores <strong>Medium (M) baseline estimates</strong> for each role, and other t-shirt sizes
+        (XS, S, L, XL) are calculated using Fibonacci scaling.
+    </p>
+</div>

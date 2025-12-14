@@ -1,0 +1,90 @@
+@page "/catalog"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Catalog Entries</PageTitle>
+
+<h1>Catalog Entries</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="CreateNew">
+        <i class="bi bi-plus-circle"></i> Create New Catalog Entry
+    </button>
+</div>
+
+@if (entries == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!entries.Any())
+{
+    <p><em>No catalog entries found. Click "Create New Catalog Entry" to add one.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Feature ID</th>
+                <th>Description</th>
+                <th># Estimates</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in entries)
+            {
+                <tr>
+                    <td>@entry.Id</td>
+                    <td>@entry.Name</td>
+                    <td>@entry.FeatureId</td>
+                    <td>@entry.Description</td>
+                    <td>@entry.MediumEstimates.Count</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(entry.Id)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(entry.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<CatalogEntry>? entries;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+    }
+
+    private async Task LoadEntries()
+    {
+        entries = await DataProvider.GetCatalogEntriesAsync();
+    }
+
+    private void CreateNew()
+    {
+        Navigation.NavigateTo("/catalog/new");
+    }
+
+    private void Edit(string id)
+    {
+        Navigation.NavigateTo($"/catalog/edit/{id}");
+    }
+
+    private async Task Delete(string id)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete catalog entry '{id}'?"))
+        {
+            await DataProvider.DeleteCatalogEntryAsync(id);
+            await LoadEntries();
+        }
+    }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+}

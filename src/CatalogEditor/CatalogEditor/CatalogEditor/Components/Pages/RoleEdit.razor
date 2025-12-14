@@ -1,0 +1,88 @@
+@page "/roles/new"
+@page "/roles/edit/{id}"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "Create New Role" : $"Edit Role: {role.Name}")</PageTitle>
+
+<h1>@(IsNew ? "Create New Role" : "Edit Role")</h1>
+
+@if (role == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="role" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="id" class="form-label">ID</label>
+            <InputText id="id" class="form-control" @bind-Value="role.Id" disabled="@(!IsNew)" />
+            <div class="form-text">Unique identifier (lowercase, no spaces). Cannot be changed after creation.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="role.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="role.Description" rows="3" />
+        </div>
+
+        <div class="mb-3">
+            <label for="copilotMultiplier" class="form-label">Copilot Multiplier</label>
+            <InputNumber id="copilotMultiplier" class="form-control" @bind-Value="role.CopilotMultiplier" step="0.01" />
+            <div class="form-text">Productivity multiplier (e.g., 0.70 = 30% faster with Copilot, 1.0 = no AI acceleration).</div>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private Role role = new();
+    private bool IsNew => string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsNew && Id != null)
+        {
+            var existing = await DataProvider.GetRoleAsync(Id);
+            if (existing != null)
+            {
+                role = existing;
+            }
+            else
+            {
+                // Role not found, redirect to list
+                Navigation.NavigateTo("/roles");
+            }
+        }
+        else
+        {
+            role = new Role { CopilotMultiplier = 1.0m };
+        }
+    }
+
+    private async Task Save()
+    {
+        await DataProvider.SaveRoleAsync(role);
+        Navigation.NavigateTo("/roles");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/roles");
+    }
+}

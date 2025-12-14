@@ -1,0 +1,148 @@
+@page "/catalog/new"
+@page "/catalog/edit/{id}"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "Create New Catalog Entry" : $"Edit Catalog Entry: {entry.Name}")</PageTitle>
+
+<h1>@(IsNew ? "Create New Catalog Entry" : "Edit Catalog Entry")</h1>
+
+@if (entry == null || roles == null || features == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="entry" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="id" class="form-label">ID</label>
+            <InputText id="id" class="form-control" @bind-Value="entry.Id" disabled="@(!IsNew)" />
+            <div class="form-text">Unique identifier (lowercase, hyphens allowed). Cannot be changed after creation.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="featureId" class="form-label">Feature</label>
+            <InputSelect id="featureId" class="form-control" @bind-Value="entry.FeatureId">
+                <option value="">-- Select a feature --</option>
+                @foreach (var feature in features)
+                {
+                    <option value="@feature.Id">@feature.Name (@feature.Id)</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="entry.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="entry.Description" rows="3" />
+        </div>
+
+        <h3>Medium (M) Estimates by Role</h3>
+        <p class="text-muted">Enter baseline hours for Medium size. Other sizes (XS, S, L, XL) are calculated using Fibonacci scaling.</p>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Hours (Medium)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var estimate in entry.MediumEstimates)
+                {
+                    <tr>
+                        <td>
+                            <InputSelect class="form-control" @bind-Value="estimate.RoleId">
+                                <option value="">-- Select role --</option>
+                                @foreach (var role in roles)
+                                {
+                                    <option value="@role.Id">@role.Name (@role.Id)</option>
+                                }
+                            </InputSelect>
+                        </td>
+                        <td>
+                            <InputNumber class="form-control" @bind-Value="estimate.Hours" step="0.5" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemoveEstimate(estimate)">Remove</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mb-3">
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="AddEstimate">
+                <i class="bi bi-plus-circle"></i> Add Role Estimate
+            </button>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private CatalogEntry entry = new();
+    private List<Role>? roles;
+    private List<Feature>? features;
+    private bool IsNew => string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = await DataProvider.GetRolesAsync();
+        features = await DataProvider.GetFeaturesAsync();
+
+        if (!IsNew && Id != null)
+        {
+            var existing = await DataProvider.GetCatalogEntryAsync(Id);
+            if (existing != null)
+            {
+                entry = existing;
+            }
+            else
+            {
+                Navigation.NavigateTo("/catalog");
+            }
+        }
+        else
+        {
+            entry = new CatalogEntry();
+        }
+    }
+
+    private void AddEstimate()
+    {
+        entry.MediumEstimates.Add(new MediumEstimate());
+    }
+
+    private void RemoveEstimate(MediumEstimate estimate)
+    {
+        entry.MediumEstimates.Remove(estimate);
+    }
+
+    private async Task Save()
+    {
+        await DataProvider.SaveCatalogEntryAsync(entry);
+        Navigation.NavigateTo("/catalog");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/catalog");
+    }
+}

@@ -1,0 +1,88 @@
+@page "/roles"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Roles</PageTitle>
+
+<h1>Roles</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="CreateNew">
+        <i class="bi bi-plus-circle"></i> Create New Role
+    </button>
+</div>
+
+@if (roles == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!roles.Any())
+{
+    <p><em>No roles found. Click "Create New Role" to add one.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Copilot Multiplier</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var role in roles)
+            {
+                <tr>
+                    <td>@role.Id</td>
+                    <td>@role.Name</td>
+                    <td>@role.Description</td>
+                    <td>@role.CopilotMultiplier</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(role.Id)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(role.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Role>? roles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoles();
+    }
+
+    private async Task LoadRoles()
+    {
+        roles = await DataProvider.GetRolesAsync();
+    }
+
+    private void CreateNew()
+    {
+        Navigation.NavigateTo("/roles/new");
+    }
+
+    private void Edit(string id)
+    {
+        Navigation.NavigateTo($"/roles/edit/{id}");
+    }
+
+    private async Task Delete(string id)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete role '{id}'?"))
+        {
+            await DataProvider.DeleteRoleAsync(id);
+            await LoadRoles();
+        }
+    }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+}

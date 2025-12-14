@@ -1,0 +1,156 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-12-13T00:00:00Z",
+  "roles": [
+    {
+      "id": "developer",
+      "name": "Developer",
+      "description": "Software developer implementing features and business logic",
+      "copilotMultiplier": 0.70
+    },
+    {
+      "id": "devops",
+      "name": "DevOps Engineer",
+      "description": "Infrastructure, deployment, and CI/CD specialist",
+      "copilotMultiplier": 0.75
+    },
+    {
+      "id": "em",
+      "name": "Engagement Manager",
+      "description": "Project coordination and stakeholder communication",
+      "copilotMultiplier": 1.0
+    }
+  ],
+  "countables": [
+    {
+      "id": "user-story",
+      "name": "User Story",
+      "description": "A discrete feature or requirement from the product backlog",
+      "category": "requirements"
+    },
+    {
+      "id": "api-endpoint",
+      "name": "API Endpoint",
+      "description": "A REST API endpoint or GraphQL query/mutation",
+      "category": "api"
+    },
+    {
+      "id": "db-table",
+      "name": "Database Table",
+      "description": "A new database table with CRUD operations",
+      "category": "data"
+    },
+    {
+      "id": "deployment-env",
+      "name": "Deployment Environment",
+      "description": "A deployment target (dev, staging, prod, etc.)",
+      "category": "infrastructure"
+    },
+    {
+      "id": "integration",
+      "name": "Third-Party Integration",
+      "description": "Integration with an external service or API",
+      "category": "integration"
+    }
+  ],
+  "features": [
+    {
+      "id": "basic-crud",
+      "name": "Basic CRUD Feature",
+      "description": "Implement create, read, update, delete operations for a domain entity",
+      "category": "feature"
+    },
+    {
+      "id": "api-integration",
+      "name": "Third-Party API Integration",
+      "description": "Integrate with a third-party REST API",
+      "category": "integration"
+    },
+    {
+      "id": "ci-cd-pipeline",
+      "name": "CI/CD Pipeline Setup",
+      "description": "Configure automated build, test, and deployment pipeline",
+      "category": "devops"
+    },
+    {
+      "id": "database-migration",
+      "name": "Database Schema Migration",
+      "description": "Plan and execute a database schema change",
+      "category": "data"
+    },
+    {
+      "id": "testing-suite",
+      "name": "Comprehensive Test Suite",
+      "description": "Write unit, integration, and end-to-end tests",
+      "category": "qa"
+    },
+    {
+      "id": "performance-optimization",
+      "name": "Performance Optimization",
+      "description": "Optimize code or infrastructure for performance improvements",
+      "category": "devops"
+    }
+  ],
+  "catalog": [
+    {
+      "id": "basic-crud",
+      "featureId": "basic-crud",
+      "name": "Basic CRUD Feature",
+      "description": "Implement create, read, update, delete operations for a domain entity",
+      "mediumEstimates": [
+        {
+          "roleId": "developer",
+          "hours": 24
+        },
+        {
+          "roleId": "devops",
+          "hours": 4
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "api-integration",
+      "featureId": "api-integration",
+      "name": "Third-Party API Integration",
+      "description": "Integrate with a third-party REST API",
+      "mediumEstimates": [
+        {
+          "roleId": "developer",
+          "hours": 16
+        },
+        {
+          "roleId": "devops",
+          "hours": 4
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "ci-cd-pipeline",
+      "featureId": "ci-cd-pipeline",
+      "name": "CI/CD Pipeline Setup",
+      "description": "Configure automated build, test, and deployment pipeline",
+      "mediumEstimates": [
+        {
+          "roleId": "developer",
+          "hours": 4
+        },
+        {
+          "roleId": "devops",
+          "hours": 16
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        }
+      ]
+    }
+  ]
+}

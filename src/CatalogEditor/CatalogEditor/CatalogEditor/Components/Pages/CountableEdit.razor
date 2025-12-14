@@ -1,0 +1,87 @@
+@page "/countables/new"
+@page "/countables/edit/{id}"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "Create New Countable" : $"Edit Countable: {countable.Name}")</PageTitle>
+
+<h1>@(IsNew ? "Create New Countable" : "Edit Countable")</h1>
+
+@if (countable == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="countable" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="id" class="form-label">ID</label>
+            <InputText id="id" class="form-control" @bind-Value="countable.Id" disabled="@(!IsNew)" />
+            <div class="form-text">Unique identifier (lowercase, hyphens allowed). Cannot be changed after creation.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="countable.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="countable.Description" rows="3" />
+        </div>
+
+        <div class="mb-3">
+            <label for="category" class="form-label">Category</label>
+            <InputText id="category" class="form-control" @bind-Value="countable.Category" />
+            <div class="form-text">Optional grouping (e.g., "requirements", "api", "data", "infrastructure").</div>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private Countable countable = new();
+    private bool IsNew => string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsNew && Id != null)
+        {
+            var existing = await DataProvider.GetCountableAsync(Id);
+            if (existing != null)
+            {
+                countable = existing;
+            }
+            else
+            {
+                Navigation.NavigateTo("/countables");
+            }
+        }
+        else
+        {
+            countable = new Countable();
+        }
+    }
+
+    private async Task Save()
+    {
+        await DataProvider.SaveCountableAsync(countable);
+        Navigation.NavigateTo("/countables");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/countables");
+    }
+}

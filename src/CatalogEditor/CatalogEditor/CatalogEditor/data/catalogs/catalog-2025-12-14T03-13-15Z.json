@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-12-14T03:13:15.3915901Z",
+  "roles": [
+    {
+      "id": "em",
+      "name": "Engagement manager",
+      "description": "",
+      "copilotMultiplier": 1.0
+    }
+  ],
+  "countables": [
+    {
+      "id": "data-screen",
+      "name": "Add/edit/remove entity screen",
+      "description": "",
+      "category": "dev"
+    }
+  ],
+  "features": [
+    {
+      "id": "screen",
+      "name": "Add/edit/remove entity",
+      "description": "",
+      "category": "feature"
+    }
+  ],
+  "catalog": []
+}

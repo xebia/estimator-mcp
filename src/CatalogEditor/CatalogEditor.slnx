@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CatalogEditor/CatalogEditor.Client/CatalogEditor.Client.csproj" />
+  <Project Path="CatalogEditor/CatalogEditor/CatalogEditor.csproj" />
+</Solution>
