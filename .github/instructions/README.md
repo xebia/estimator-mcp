@@ -33,7 +33,7 @@ For comprehensive project specifications, requirements, and data structures, see
 
 ### [Data Structure](../../spec/data-structure.md)
 - Complete JSON catalog schema
-- Role, countable, feature, and catalog entry definitions
+- Role, feature, and catalog entry definitions
 - Fibonacci scaling model for t-shirt sizing
 - LINQ patterns for querying catalog data
 - File storage and versioning strategy

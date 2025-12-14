@@ -22,7 +22,6 @@ A Blazor Server application for creating, editing, and managing the estimation c
 **Features:**
 - Interactive Server mode for real-time updates
 - Manage roles with Copilot productivity multipliers
-- Define countables (user stories, API endpoints, etc.)
 - Create and edit features
 - Build catalog entries with role-based time estimates
 - T-shirt sizing with Fibonacci scaling (stores Medium baseline, auto-calculates other sizes)
@@ -64,7 +63,6 @@ Navigate to `https://localhost:5001` (or the URL shown in console).
 
 The application includes sample catalog data with:
 - 3 roles (Developer, DevOps Engineer, Engagement Manager)
-- 5 countables (User Story, API Endpoint, Database Table, etc.)
 - 6 features (Basic CRUD, API Integration, CI/CD Pipeline, etc.)
 - 3 catalog entries with role-based estimates
 

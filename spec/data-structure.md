@@ -4,7 +4,7 @@
 
 The MCP Server stores all configuration and catalog data in a single **JSON file** persisted on disk. The file is named with an ISO 8601 timestamp to enable automatic version history (e.g., `catalog-2025-12-12T14-30-00Z.json`).
 
-A single JSON file simplifies deployment (one file to manage), enables versioning by filename, and allows runtime code (C#) to extract derived lists (roles, countables, features) using LINQ queries rather than requiring separate files.
+A single JSON file simplifies deployment (one file to manage), enables versioning by filename, and allows runtime code (C#) to extract derived lists (roles, features) using LINQ queries rather than requiring separate files.
 
 ## File Storage
 
@@ -22,7 +22,6 @@ A single JSON file simplifies deployment (one file to manage), enables versionin
   "version": "1.0",
   "timestamp": "2025-12-12T14:30:00Z",
   "roles": [...],
-  "countables": [...],
   "features": [...],
   "catalog": [...]
 }
@@ -60,51 +59,6 @@ A list of implementation roles used in the project. Each role includes a Copilot
 - `name` (string): Display name for the role.
 - `description` (string): Human-readable description of responsibilities.
 - `copilotMultiplier` (number): Multiplier for Copilot-enhanced productivity applied to all tasks for this role (0.7 = 30% faster with Copilot, 1.0 = no AI acceleration).
-
-### Countables
-
-Items that can be counted/measured independently and contribute to project scope (e.g., user stories, API endpoints, database tables, deployment environments). These provide granularity for estimation.
-
-```json
-"countables": [
-  {
-    "id": "user-story",
-    "name": "User Story",
-    "description": "A discrete feature or requirement from the product backlog",
-    "category": "requirements"
-  },
-  {
-    "id": "api-endpoint",
-    "name": "API Endpoint",
-    "description": "A REST API endpoint or GraphQL query/mutation",
-    "category": "api"
-  },
-  {
-    "id": "db-table",
-    "name": "Database Table",
-    "description": "A new database table with CRUD operations",
-    "category": "data"
-  },
-  {
-    "id": "deployment-env",
-    "name": "Deployment Environment",
-    "description": "A deployment target (dev, staging, prod, etc.)",
-    "category": "infrastructure"
-  },
-  {
-    "id": "integration",
-    "name": "Third-Party Integration",
-    "description": "Integration with an external service or API",
-    "category": "integration"
-  }
-]
-```
-
-**Fields:**
-- `id` (string): Unique identifier for the countable type.
-- `name` (string): Display name.
-- `description` (string): Description of what this countable represents.
-- `category` (string): Optional grouping (e.g., "requirements", "api", "data", "infrastructure", "integration").
 
 ### Features
 
@@ -266,9 +220,6 @@ In C#, extract derived lists from the catalog using LINQ and auto-calculate all 
 // Extract unique roles
 var roles = catalog.Roles.Select(r => new { r.Id, r.Name }).ToList();
 
-// Extract unique countables
-var countables = catalog.Countables.Select(c => new { c.Id, c.Name }).ToList();
-
 // Extract unique features
 var features = catalog.Features.Select(f => new { f.Id, f.Name }).ToList();
 
@@ -311,10 +262,7 @@ var estimate = CalculateHours(
 1. **Startup:** Scan the data directory for all files matching `catalog-*.json`.
 2. **Select Latest:** Load the file with the most recent timestamp (ISO 8601 sort order is lexicographic-safe).
 3. **Parse & Cache:** Deserialize the JSON into an in-memory data model.
-4. **Runtime:** MCP tools query the in-memory model; no re-reads unless server restarts.
-
-## Example File Path Structure
-
+4. **Runtime:** MC
 ```
 /data/catalogs/
 ├── catalog-2025-12-01T08-00-00Z.json
@@ -332,4 +280,3 @@ var estimate = CalculateHours(
 - **Compaction:** Periodically archive old catalogs (e.g., keep last 30 days, compress older ones).
 - **Validation:** JSON Schema validation on load.
 - **Change Tracking:** Add `createdAt`, `modifiedAt`, `createdBy` fields to catalog entries for audit trails.
-- **Countable Usage:** Track which countables are used by which features/tasks for dependency analysis.

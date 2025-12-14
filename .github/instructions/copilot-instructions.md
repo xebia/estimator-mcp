@@ -21,7 +21,6 @@
   "version": "1.0",
   "timestamp": "2025-12-12T14:30:00Z",
   "roles": [{ "id": "developer", "name": "...", "copilotMultiplier": 0.70 }, ...],
-  "countables": [{ "id": "user-story", "name": "...", "category": "..." }, ...],
   "features": [{ "id": "basic-crud", "name": "...", "category": "..." }, ...],
   "catalog": [{ "id": "basic-crud", "featureId": "...", "mediumEstimates": [...] }, ...]
 }

@@ -1,11 +1,10 @@
 # Catalog Editor
 
-A Blazor web application for managing the MCP Estimator catalog data, including roles, countables, features, and catalog entries with time estimates.
+A Blazor web application for managing the MCP Estimator catalog data, including roles, features, and catalog entries with time estimates.
 
 ## Features
 
 - **Roles Management**: Define implementation roles with Copilot productivity multipliers
-- **Countables Management**: Define measurable items that contribute to project scope
 - **Features Management**: Manage typical work items and technical activities
 - **Catalog Entries**: Map features to role-based time estimates using Medium (M) baseline
   - Other t-shirt sizes (XS, S, L, XL) are auto-calculated using Fibonacci scaling
@@ -77,7 +76,6 @@ dotnet publish -c Release -o ./publish
 CatalogEditor/
 ├── Models/                          # Data models
 │   ├── Role.cs
-│   ├── Countable.cs
 │   ├── Feature.cs
 │   ├── CatalogEntry.cs
 │   └── CatalogData.cs
@@ -89,8 +87,6 @@ CatalogEditor/
 │   │   ├── Home.razor               # Dashboard
 │   │   ├── Roles.razor              # Role list
 │   │   ├── RoleEdit.razor           # Role add/edit
-│   │   ├── Countables.razor         # Countable list
-│   │   ├── CountableEdit.razor      # Countable add/edit
 │   │   ├── Features.razor           # Feature list
 │   │   ├── FeatureEdit.razor        # Feature add/edit
 │   │   ├── Catalog.razor            # Catalog entry list
@@ -107,12 +103,6 @@ CatalogEditor/
 - **Name**: Display name
 - **Description**: Role responsibilities
 - **CopilotMultiplier**: AI productivity factor (0.7 = 30% faster)
-
-### Countable
-- **Id**: Unique identifier (e.g., "api-endpoint")
-- **Name**: Display name
-- **Description**: What this countable represents
-- **Category**: Optional grouping (e.g., "api", "data")
 
 ### Feature
 - **Id**: Unique identifier (e.g., "basic-crud")

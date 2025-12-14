@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Catalog Editor is a Blazor web application for managing the MCP Estimator catalog. It provides a clean UI to manage roles, countables, features, and catalog entries with time estimates.
+The Catalog Editor is a Blazor web application for managing the MCP Estimator catalog. It provides a clean UI to manage roles, features, and catalog entries with time estimates.
 
 ## Quick Start
 
@@ -36,7 +36,6 @@ The Catalog Editor is a Blazor web application for managing the MCP Estimator ca
 
 - **Home**: Dashboard with quick access to all sections
 - **Roles**: Manage implementation roles with Copilot productivity multipliers
-- **Countables**: Define measurable project scope items
 - **Features**: Manage work items and technical activities
 - **Catalog Entries**: Map features to role-based time estimates
 

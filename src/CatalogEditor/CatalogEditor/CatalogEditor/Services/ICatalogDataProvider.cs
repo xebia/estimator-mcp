@@ -10,10 +10,6 @@ public interface ICatalogDataProvider
     Task<Role?> GetRoleAsync(string id);
     Task SaveRoleAsync(Role role);
     Task DeleteRoleAsync(string id);
-    Task<List<Countable>> GetCountablesAsync();
-    Task<Countable?> GetCountableAsync(string id);
-    Task SaveCountableAsync(Countable countable);
-    Task DeleteCountableAsync(string id);
     Task<List<Feature>> GetFeaturesAsync();
     Task<Feature?> GetFeatureAsync(string id);
     Task SaveFeatureAsync(Feature feature);

@@ -9,14 +9,6 @@
       "copilotMultiplier": 1.0
     }
   ],
-  "countables": [
-    {
-      "id": "data-screen",
-      "name": "Add/edit/remove entity screen",
-      "description": "",
-      "category": "dev"
-    }
-  ],
   "features": [
     {
       "id": "screen",

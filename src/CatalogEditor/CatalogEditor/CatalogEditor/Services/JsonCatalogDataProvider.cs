@@ -113,42 +113,6 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
         }
     }
 
-    // Countables
-    public async Task<List<Countable>> GetCountablesAsync()
-    {
-        var catalog = await LoadCatalogAsync();
-        return catalog.Countables;
-    }
-
-    public async Task<Countable?> GetCountableAsync(string id)
-    {
-        var catalog = await LoadCatalogAsync();
-        return catalog.Countables.FirstOrDefault(c => c.Id == id);
-    }
-
-    public async Task SaveCountableAsync(Countable countable)
-    {
-        var catalog = await LoadCatalogAsync();
-        var existing = catalog.Countables.FirstOrDefault(c => c.Id == countable.Id);
-        if (existing != null)
-        {
-            catalog.Countables.Remove(existing);
-        }
-        catalog.Countables.Add(countable);
-        await SaveCatalogAsync(catalog);
-    }
-
-    public async Task DeleteCountableAsync(string id)
-    {
-        var catalog = await LoadCatalogAsync();
-        var countable = catalog.Countables.FirstOrDefault(c => c.Id == id);
-        if (countable != null)
-        {
-            catalog.Countables.Remove(countable);
-            await SaveCatalogAsync(catalog);
-        }
-    }
-
     // Features
     public async Task<List<Feature>> GetFeaturesAsync()
     {

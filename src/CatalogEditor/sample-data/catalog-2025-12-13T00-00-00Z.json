@@ -21,38 +21,6 @@
       "copilotMultiplier": 1.0
     }
   ],
-  "countables": [
-    {
-      "id": "user-story",
-      "name": "User Story",
-      "description": "A discrete feature or requirement from the product backlog",
-      "category": "requirements"
-    },
-    {
-      "id": "api-endpoint",
-      "name": "API Endpoint",
-      "description": "A REST API endpoint or GraphQL query/mutation",
-      "category": "api"
-    },
-    {
-      "id": "db-table",
-      "name": "Database Table",
-      "description": "A new database table with CRUD operations",
-      "category": "data"
-    },
-    {
-      "id": "deployment-env",
-      "name": "Deployment Environment",
-      "description": "A deployment target (dev, staging, prod, etc.)",
-      "category": "infrastructure"
-    },
-    {
-      "id": "integration",
-      "name": "Third-Party Integration",
-      "description": "Integration with an external service or API",
-      "category": "integration"
-    }
-  ],
   "features": [
     {
       "id": "basic-crud",
