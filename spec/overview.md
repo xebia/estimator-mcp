@@ -8,7 +8,7 @@ The MCP Server system must support the following capabilities:
 
 | Feature Area | Requirement/Description |
 |--------------|-------------------------|
-| Catalog Management | • Define and maintain a central catalog of function points/features.<br>• Each item in the catalog must be associable with specific roles (e.g., Developer, DevOps Engineer).<br>• Each catalog entry maps effort in t-shirt sizing (XS, S, M, L, XL) to time estimates per role.<br>• Catalog stored as JSON with timestamp-based versioning (automatic version history). |
+| Catalog Management | • Define and maintain a central catalog of features/work items.<br>• Each catalog entry includes ID, Name, Description, Category, and role estimates.<br>• Each catalog entry stores Medium (M) baseline hours per role, with other sizes (XS, S, L, XL) auto-calculated using Fibonacci scaling.<br>• Catalog stored as JSON with timestamp-based versioning (automatic version history). |
 | Estimate Generation | • LLM collects task/feature descriptions from user (using t-shirt sizing).<br>• MCP server receives selected tasks and role specifications.<br>• Server returns breakdown of **estimated time per role per task** in hours/days.<br>• Output is time-based only; cost calculations handled externally via rate sheets. |
 | Team/Staffing Model | • The system accounts for various implementation roles (e.g., Developer, DevOps Engineer).<br>• Supports fractional roles, specifically for Engagement Manager responsible for coordination.<br>• Time estimates are per-role so external systems can build staffing/scheduling plans. |
 | Non-Functional Requirements | • Non-functional requirements (tooling, testing, deployment) handled as percentage uplift across the project (time burden applied to all tasks). |
@@ -28,12 +28,12 @@ The estimation process tracks effort allocation across the following implementat
 4. 💻 Technical Considerations
 
 A. Data Model
-Catalog entries link features/tasks to roles and time estimates:
+The catalog contains features/work items directly with role time estimates:
 
-- **Feature/Task:** Name, Description, Category (optional tags/domains).
-- **T-Shirt Sizing Mapping:** Each feature maps to effort size (XS, S, M, L, XL).
-- **Role-Time Mapping:** For each feature and sizing level, estimated hours/days per role (Developer, DevOps Engineer, Engagement Manager).
-- **Productivity Adjustment:** Column for Copilot-enhanced productivity multiplier per role-task combo (applied to historical baseline estimates).
+- **Feature/Task (Catalog Entry):** ID, Name, Description, Category (optional tags/domains).
+- **T-Shirt Sizing Mapping:** Each feature has a Medium (M) baseline, with other sizes (XS, S, L, XL) calculated using Fibonacci scaling.
+- **Role-Time Mapping:** For each catalog entry and sizing level, estimated hours/days per role (Developer, DevOps Engineer, Engagement Manager).
+- **Productivity Adjustment:** Copilot-enhanced productivity multiplier is defined per role and applied to all tasks for that role.
 
 B. Catalog Storage
 - JSON format stored on disk.

@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-12-14T04:07:20.3598625Z",
+  "roles": [
+    {
+      "id": "em",
+      "name": "Engagement manager",
+      "description": "",
+      "copilotMultiplier": 1.0
+    },
+    {
+      "id": "dev",
+      "name": "Developer",
+      "description": "",
+      "copilotMultiplier": 0.6
+    },
+    {
+      "id": "sre",
+      "name": "SRE",
+      "description": "",
+      "copilotMultiplier": 1.0
+    },
+    {
+      "id": "devops",
+      "name": "DevOps engineer",
+      "description": "",
+      "copilotMultiplier": 0.7
+    }
+  ],
+  "features": [
+    {
+      "id": "screen",
+      "name": "Add/edit/remove entity",
+      "description": "",
+      "category": "feature"
+    },
+    {
+      "id": "screen-main",
+      "name": "Main screen",
+      "description": "Screen using multiple entities, business rules, complex behavior",
+      "category": "feature"
+    }
+  ],
+  "catalog": [
+    {
+      "id": "Entity editor",
+      "featureId": "screen",
+      "name": "Entity add/edit/remove",
+      "description": "",
+      "mediumEstimates": [
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 20
+        }
+      ]
+    }
+  ]
+}

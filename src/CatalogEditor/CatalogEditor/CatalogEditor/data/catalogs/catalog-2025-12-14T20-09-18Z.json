@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-12-14T20:09:18.3114248Z",
+  "roles": [
+    {
+      "id": "em",
+      "name": "Engagement manager",
+      "description": "",
+      "copilotMultiplier": 1.0
+    },
+    {
+      "id": "dev",
+      "name": "Developer",
+      "description": "",
+      "copilotMultiplier": 0.6
+    },
+    {
+      "id": "sre",
+      "name": "SRE",
+      "description": "",
+      "copilotMultiplier": 1.0
+    },
+    {
+      "id": "devops",
+      "name": "DevOps engineer",
+      "description": "",
+      "copilotMultiplier": 0.7
+    }
+  ],
+  "catalog": [
+    {
+      "id": "Main screen",
+      "name": "Main screen",
+      "description": "",
+      "category": "",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 40
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "Entity editor",
+      "name": "Entity add/edit/remove",
+      "description": "",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 20
+        }
+      ]
+    }
+  ]
+}

@@ -5,8 +5,8 @@ A Blazor web application for managing the MCP Estimator catalog data, including 
 ## Features
 
 - **Roles Management**: Define implementation roles with Copilot productivity multipliers
-- **Features Management**: Manage typical work items and technical activities
-- **Catalog Entries**: Map features to role-based time estimates using Medium (M) baseline
+- **Catalog Management**: Manage features/work items directly with role-based time estimates using Medium (M) baseline
+  - Each catalog entry includes ID, Name, Description, Category, and role estimates
   - Other t-shirt sizes (XS, S, L, XL) are auto-calculated using Fibonacci scaling
 
 ## Architecture
@@ -76,7 +76,6 @@ dotnet publish -c Release -o ./publish
 CatalogEditor/
 ├── Models/                          # Data models
 │   ├── Role.cs
-│   ├── Feature.cs
 │   ├── CatalogEntry.cs
 │   └── CatalogData.cs
 ├── Services/                        # Data access layer
@@ -87,8 +86,6 @@ CatalogEditor/
 │   │   ├── Home.razor               # Dashboard
 │   │   ├── Roles.razor              # Role list
 │   │   ├── RoleEdit.razor           # Role add/edit
-│   │   ├── Features.razor           # Feature list
-│   │   ├── FeatureEdit.razor        # Feature add/edit
 │   │   ├── Catalog.razor            # Catalog entry list
 │   │   └── CatalogEdit.razor        # Catalog entry add/edit
 │   └── Layout/                      # Layout components
@@ -104,17 +101,11 @@ CatalogEditor/
 - **Description**: Role responsibilities
 - **CopilotMultiplier**: AI productivity factor (0.7 = 30% faster)
 
-### Feature
+### Catalog Entry
 - **Id**: Unique identifier (e.g., "basic-crud")
 - **Name**: Display name
-- **Description**: Work involved
-- **Category**: Optional grouping (e.g., "feature", "devops")
-
-### Catalog Entry
-- **Id**: Unique identifier
-- **FeatureId**: Reference to a feature
-- **Name**: Display name
 - **Description**: Detailed scope
+- **Category**: Optional grouping (e.g., "feature", "integration", "devops", "data", "qa")
 - **MediumEstimates**: List of role estimates for Medium size
   - **RoleId**: Reference to a role
   - **Hours**: Baseline hours for Medium size

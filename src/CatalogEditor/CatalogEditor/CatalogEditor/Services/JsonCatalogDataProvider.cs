@@ -113,42 +113,6 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
         }
     }
 
-    // Features
-    public async Task<List<Feature>> GetFeaturesAsync()
-    {
-        var catalog = await LoadCatalogAsync();
-        return catalog.Features;
-    }
-
-    public async Task<Feature?> GetFeatureAsync(string id)
-    {
-        var catalog = await LoadCatalogAsync();
-        return catalog.Features.FirstOrDefault(f => f.Id == id);
-    }
-
-    public async Task SaveFeatureAsync(Feature feature)
-    {
-        var catalog = await LoadCatalogAsync();
-        var existing = catalog.Features.FirstOrDefault(f => f.Id == feature.Id);
-        if (existing != null)
-        {
-            catalog.Features.Remove(existing);
-        }
-        catalog.Features.Add(feature);
-        await SaveCatalogAsync(catalog);
-    }
-
-    public async Task DeleteFeatureAsync(string id)
-    {
-        var catalog = await LoadCatalogAsync();
-        var feature = catalog.Features.FirstOrDefault(f => f.Id == id);
-        if (feature != null)
-        {
-            catalog.Features.Remove(feature);
-            await SaveCatalogAsync(catalog);
-        }
-    }
-
     // Catalog Entries
     public async Task<List<CatalogEntry>> GetCatalogEntriesAsync()
     {

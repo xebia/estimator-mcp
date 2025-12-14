@@ -22,7 +22,6 @@ A single JSON file simplifies deployment (one file to manage), enables versionin
   "version": "1.0",
   "timestamp": "2025-12-12T14:30:00Z",
   "roles": [...],
-  "features": [...],
   "catalog": [...]
 }
 ```
@@ -60,60 +59,9 @@ A list of implementation roles used in the project. Each role includes a Copilot
 - `description` (string): Human-readable description of responsibilities.
 - `copilotMultiplier` (number): Multiplier for Copilot-enhanced productivity applied to all tasks for this role (0.7 = 30% faster with Copilot, 1.0 = no AI acceleration).
 
-### Features
-
-A list of typical work items (features, tasks, or technical activities) that appear in the catalog. Each feature can be sized with t-shirt sizing and mapped to roles.
-
-```json
-"features": [
-  {
-    "id": "basic-crud",
-    "name": "Basic CRUD Feature",
-    "description": "Implement create, read, update, delete operations for a domain entity",
-    "category": "feature"
-  },
-  {
-    "id": "api-integration",
-    "name": "Third-Party API Integration",
-    "description": "Integrate with a third-party REST API",
-    "category": "integration"
-  },
-  {
-    "id": "ci-cd-pipeline",
-    "name": "CI/CD Pipeline Setup",
-    "description": "Configure automated build, test, and deployment pipeline",
-    "category": "devops"
-  },
-  {
-    "id": "database-migration",
-    "name": "Database Schema Migration",
-    "description": "Plan and execute a database schema change",
-    "category": "data"
-  },
-  {
-    "id": "testing-suite",
-    "name": "Comprehensive Test Suite",
-    "description": "Write unit, integration, and end-to-end tests",
-    "category": "qa"
-  },
-  {
-    "id": "performance-optimization",
-    "name": "Performance Optimization",
-    "description": "Optimize code or infrastructure for performance improvements",
-    "category": "devops"
-  }
-]
-```
-
-**Fields:**
-- `id` (string): Unique identifier for the feature.
-- `name` (string): Display name.
-- `description` (string): Detailed description of the work involved.
-- `category` (string): Optional grouping (e.g., "feature", "integration", "devops", "data", "qa").
-
 ### Catalog
 
-The main catalog that maps features to role time estimates. Instead of storing all five t-shirt sizes (XS, S, M, L, XL), the catalog stores only the **"M" (Medium) baseline estimate** for each feature-role combination. The other sizes are **auto-calculated using Fibonacci scaling** to minimize data entry and maintenance.
+The catalog contains features/work items with role time estimates. Each catalog entry represents a distinct feature or task. Instead of storing all five t-shirt sizes (XS, S, M, L, XL), the catalog stores only the **"M" (Medium) baseline estimate** for each feature-role combination. The other sizes are **auto-calculated using Fibonacci scaling** to minimize data entry and maintenance.
 
 #### Fibonacci Scaling
 
@@ -140,9 +88,9 @@ The t-shirt sizes follow the Fibonacci sequence for proportional estimation:
 "catalog": [
   {
     "id": "basic-crud",
-    "featureId": "basic-crud",
     "name": "Basic CRUD Feature",
     "description": "Implement create, read, update, delete operations for a domain entity",
+    "category": "feature",
     "mediumEstimates": [
       {
         "roleId": "developer",
@@ -160,9 +108,9 @@ The t-shirt sizes follow the Fibonacci sequence for proportional estimation:
   },
   {
     "id": "api-integration",
-    "featureId": "api-integration",
     "name": "Third-Party API Integration",
     "description": "Integrate with a third-party REST API",
+    "category": "integration",
     "mediumEstimates": [
       {
         "roleId": "developer",
@@ -180,9 +128,9 @@ The t-shirt sizes follow the Fibonacci sequence for proportional estimation:
   },
   {
     "id": "ci-cd-pipeline",
-    "featureId": "ci-cd-pipeline",
     "name": "CI/CD Pipeline Setup",
     "description": "Configure automated build, test, and deployment pipeline",
+    "category": "devops",
     "mediumEstimates": [
       {
         "roleId": "developer",
@@ -203,9 +151,9 @@ The t-shirt sizes follow the Fibonacci sequence for proportional estimation:
 
 **Fields (per Catalog Entry):**
 - `id` (string): Unique identifier for this feature (no size suffix, since size is calculated).
-- `featureId` (string): Reference to a feature from the `features` list.
 - `name` (string): Display name.
 - `description` (string): Detailed scope description (applies to all sizes).
+- `category` (string): Optional grouping (e.g., "feature", "integration", "devops", "data", "qa").
 - `mediumEstimates` (array): Array of role estimates for the Medium (M) baseline only.
 
 **Fields (per Medium Estimate):**
@@ -220,8 +168,8 @@ In C#, extract derived lists from the catalog using LINQ and auto-calculate all 
 // Extract unique roles
 var roles = catalog.Roles.Select(r => new { r.Id, r.Name }).ToList();
 
-// Extract unique features
-var features = catalog.Features.Select(f => new { f.Id, f.Name }).ToList();
+// Extract unique features from catalog entries
+var features = catalog.Catalog.Select(f => new { f.Id, f.Name, f.Category }).ToList();
 
 // Fibonacci scaling factors (relative to Medium = 5)
 static decimal GetFibonacciMultiplier(string tshirtSize) => tshirtSize switch
