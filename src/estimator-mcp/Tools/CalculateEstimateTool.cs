@@ -145,7 +145,8 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
 
             // Calculate estimates
             var featureEstimates = new List<object>();
-            var roleTotals = new Dictionary<string, decimal>();
+            var roleNonAiTotals = new Dictionary<string, decimal>();
+            var roleAiAdjustedTotals = new Dictionary<string, decimal>();
 
             foreach (var feature in features)
             {
@@ -157,22 +158,26 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
                 foreach (var mediumEstimate in catalogEntry.MediumEstimates)
                 {
                     var role = rolesLookup[mediumEstimate.RoleId];
-                    var adjustedHours = mediumEstimate.Hours * sizeMultiplier * role.CopilotMultiplier;
+                    var nonAiHours = mediumEstimate.Hours * sizeMultiplier;
+                    var aiAdjustedHours = nonAiHours * role.CopilotMultiplier;
                     
                     featureRoleEstimates[mediumEstimate.RoleId] = new
                     {
                         roleName = role.Name,
                         baseHours = mediumEstimate.Hours,
                         sizeMultiplier = sizeMultiplier,
+                        nonAiHours = Math.Round(nonAiHours, 1),
                         copilotMultiplier = role.CopilotMultiplier,
-                        adjustedHours = Math.Round(adjustedHours, 1)
+                        aiAdjustedHours = Math.Round(aiAdjustedHours, 1)
                     };
 
-                    if (!roleTotals.ContainsKey(mediumEstimate.RoleId))
+                    if (!roleNonAiTotals.ContainsKey(mediumEstimate.RoleId))
                     {
-                        roleTotals[mediumEstimate.RoleId] = 0;
+                        roleNonAiTotals[mediumEstimate.RoleId] = 0;
+                        roleAiAdjustedTotals[mediumEstimate.RoleId] = 0;
                     }
-                    roleTotals[mediumEstimate.RoleId] += adjustedHours;
+                    roleNonAiTotals[mediumEstimate.RoleId] += nonAiHours;
+                    roleAiAdjustedTotals[mediumEstimate.RoleId] += aiAdjustedHours;
                 }
 
                 featureEstimates.Add(new
@@ -186,21 +191,28 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
             }
 
             // Build role summaries
-            var roleSummaries = roleTotals.Select(kvp =>
+            var roleSummaries = roleNonAiTotals.Keys.Select(roleId =>
             {
-                var role = rolesLookup[kvp.Key];
-                var totalHours = Math.Round(kvp.Value, 1);
-                var totalDays = Math.Round(totalHours / 8m, 1);
+                var role = rolesLookup[roleId];
+                var nonAiHours = Math.Round(roleNonAiTotals[roleId], 1);
+                var aiAdjustedHours = Math.Round(roleAiAdjustedTotals[roleId], 1);
+                var nonAiDays = Math.Round(nonAiHours / 8m, 1);
+                var aiAdjustedDays = Math.Round(aiAdjustedHours / 8m, 1);
                 
                 return new
                 {
-                    roleId = kvp.Key,
+                    roleId = roleId,
                     roleName = role.Name,
-                    totalHours = totalHours,
-                    totalDays = totalDays,
-                    copilotMultiplier = role.CopilotMultiplier
+                    nonAiHours = nonAiHours,
+                    nonAiDays = nonAiDays,
+                    copilotMultiplier = role.CopilotMultiplier,
+                    aiAdjustedHours = aiAdjustedHours,
+                    aiAdjustedDays = aiAdjustedDays
                 };
-            }).OrderByDescending(r => r.totalHours).ToList();
+            }).OrderByDescending(r => r.aiAdjustedHours).ToList();
+
+            var totalNonAiHours = Math.Round(roleNonAiTotals.Values.Sum(), 1);
+            var totalAiAdjustedHours = Math.Round(roleAiAdjustedTotals.Values.Sum(), 1);
 
             // Build result
             var result = new
@@ -211,8 +223,10 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
                 {
                     totalFeatures = features.Count,
                     roleSummaries = roleSummaries,
-                    overallTotalHours = Math.Round(roleTotals.Values.Sum(), 1),
-                    overallTotalDays = Math.Round(roleTotals.Values.Sum() / 8m, 1)
+                    overallNonAiHours = totalNonAiHours,
+                    overallNonAiDays = Math.Round(totalNonAiHours / 8m, 1),
+                    overallAiAdjustedHours = totalAiAdjustedHours,
+                    overallAiAdjustedDays = Math.Round(totalAiAdjustedHours / 8m, 1)
                 },
                 featureDetails = featureEstimates
             };
