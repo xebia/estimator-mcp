@@ -1,4 +1,4 @@
-namespace CatalogEditor.Models;
+namespace EstimatorMcp.Models;
 
 public class Role
 {

@@ -1,4 +1,4 @@
-using CatalogEditor.Models;
+using EstimatorMcp.Models;
 
 namespace CatalogEditor.Services;
 

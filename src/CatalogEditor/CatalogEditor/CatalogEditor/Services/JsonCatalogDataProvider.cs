@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using CatalogEditor.Models;
+using EstimatorMcp.Models;
 
 namespace CatalogEditor.Services;
 

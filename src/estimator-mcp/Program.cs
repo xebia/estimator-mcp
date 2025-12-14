@@ -45,6 +45,7 @@ public class Program
                 // Configure MCP server with stdio transport and register tools
                 services.AddMcpServer()
                     .WithTools<InstructionsTool>()
+                    .WithTools<CatalogTool>()
                     .WithStdioServerTransport();
             });
 
