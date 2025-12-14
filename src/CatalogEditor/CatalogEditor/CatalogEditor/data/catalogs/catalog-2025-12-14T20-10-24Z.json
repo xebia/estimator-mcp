@@ -5,33 +5,97 @@
     {
       "id": "em",
       "name": "Engagement manager",
-      "description": "",
+      "description": "Manages client relationships and project planning",
       "copilotMultiplier": 1.0
     },
     {
       "id": "dev",
       "name": "Developer",
-      "description": "",
+      "description": "Full-stack developer with modern tooling",
       "copilotMultiplier": 0.6
     },
     {
       "id": "sre",
       "name": "SRE",
-      "description": "",
+      "description": "Site reliability engineer",
       "copilotMultiplier": 1.0
     },
     {
       "id": "devops",
       "name": "DevOps engineer",
-      "description": "",
+      "description": "Infrastructure and deployment automation specialist",
       "copilotMultiplier": 0.7
+    },
+    {
+      "id": "qa",
+      "name": "QA Engineer",
+      "description": "Quality assurance and test automation",
+      "copilotMultiplier": 0.65
+    },
+    {
+      "id": "ux",
+      "name": "UX Designer",
+      "description": "User experience and interface design",
+      "copilotMultiplier": 0.9
+    },
+    {
+      "id": "architect",
+      "name": "Solution Architect",
+      "description": "Technical architecture and system design",
+      "copilotMultiplier": 0.8
+    },
+    {
+      "id": "security",
+      "name": "Security Engineer",
+      "description": "Security assessment and implementation",
+      "copilotMultiplier": 0.85
     }
   ],
   "catalog": [
     {
+      "id": "user-auth",
+      "name": "User Authentication",
+      "description": "OAuth2/OIDC authentication with SSO support",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "em",
+          "hours": 1.0
+        },
+        {
+          "roleId": "dev",
+          "hours": 30
+        },
+        {
+          "roleId": "security",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "user-authorization",
+      "name": "Role-Based Access Control",
+      "description": "RBAC with permissions and role management",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 24
+        },
+        {
+          "roleId": "security",
+          "hours": 6
+        }
+      ]
+    },
+    {
       "id": "Entity editor",
       "name": "Entity add/edit/remove",
-      "description": "",
+      "description": "CRUD operations for core entities",
       "category": "feature",
       "mediumEstimates": [
         {
@@ -47,7 +111,7 @@
     {
       "id": "Main screen",
       "name": "Main screen",
-      "description": "",
+      "description": "Dashboard with key metrics and navigation",
       "category": "feature",
       "mediumEstimates": [
         {
@@ -57,18 +121,566 @@
         {
           "roleId": "em",
           "hours": 0.5
+        },
+        {
+          "roleId": "ux",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "data-grid",
+      "name": "Advanced Data Grid",
+      "description": "Filterable, sortable data grid with pagination and export",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 32
+        },
+        {
+          "roleId": "ux",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "search",
+      "name": "Search Functionality",
+      "description": "Full-text search with filters and facets",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 40
+        },
+        {
+          "roleId": "architect",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "file-upload",
+      "name": "File Upload/Download",
+      "description": "File management with cloud storage integration",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 28
+        },
+        {
+          "roleId": "security",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "notifications",
+      "name": "Notification System",
+      "description": "In-app and email notifications",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 36
+        },
+        {
+          "roleId": "ux",
+          "hours": 6
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "name": "Reporting Module",
+      "description": "Custom reports with export to PDF/Excel",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 48
+        },
+        {
+          "roleId": "ux",
+          "hours": 12
+        }
+      ]
+    },
+    {
+      "id": "api-integration",
+      "name": "Third-Party API Integration",
+      "description": "Integration with external REST/GraphQL APIs",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 32
+        },
+        {
+          "roleId": "architect",
+          "hours": 6
+        }
+      ]
+    },
+    {
+      "id": "real-time",
+      "name": "Real-Time Updates",
+      "description": "WebSocket/SignalR for live data updates",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 40
+        },
+        {
+          "roleId": "architect",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "audit-log",
+      "name": "Audit Logging",
+      "description": "Comprehensive audit trail for all actions",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 24
+        },
+        {
+          "roleId": "security",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "api-rest",
+      "name": "REST API Development",
+      "description": "RESTful API with OpenAPI/Swagger documentation",
+      "category": "backend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 60
+        },
+        {
+          "roleId": "architect",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "database-design",
+      "name": "Database Design & Implementation",
+      "description": "Schema design, migrations, and optimization",
+      "category": "backend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 40
+        },
+        {
+          "roleId": "architect",
+          "hours": 12
+        }
+      ]
+    },
+    {
+      "id": "caching",
+      "name": "Caching Layer",
+      "description": "Redis/in-memory caching implementation",
+      "category": "backend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 24
+        },
+        {
+          "roleId": "architect",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "message-queue",
+      "name": "Message Queue Integration",
+      "description": "Async processing with RabbitMQ/Azure Service Bus",
+      "category": "backend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 36
+        },
+        {
+          "roleId": "architect",
+          "hours": 8
         }
       ]
     },
     {
       "id": "ci-setup",
       "name": "CI build setup",
-      "description": "",
+      "description": "Automated build pipeline with testing",
       "category": "devops",
       "mediumEstimates": [
         {
           "roleId": "devops",
           "hours": 20
+        }
+      ]
+    },
+    {
+      "id": "cd-setup",
+      "name": "CD Deployment Pipeline",
+      "description": "Automated deployment to staging and production",
+      "category": "devops",
+      "mediumEstimates": [
+        {
+          "roleId": "devops",
+          "hours": 28
+        },
+        {
+          "roleId": "sre",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "name": "Infrastructure as Code",
+      "description": "Terraform/ARM templates for cloud resources",
+      "category": "devops",
+      "mediumEstimates": [
+        {
+          "roleId": "devops",
+          "hours": 40
+        },
+        {
+          "roleId": "architect",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "monitoring",
+      "name": "Monitoring & Alerting",
+      "description": "Application monitoring with metrics and alerts",
+      "category": "devops",
+      "mediumEstimates": [
+        {
+          "roleId": "devops",
+          "hours": 24
+        },
+        {
+          "roleId": "sre",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "logging",
+      "name": "Centralized Logging",
+      "description": "Log aggregation and analysis platform",
+      "category": "devops",
+      "mediumEstimates": [
+        {
+          "roleId": "devops",
+          "hours": 20
+        },
+        {
+          "roleId": "sre",
+          "hours": 12
+        }
+      ]
+    },
+    {
+      "id": "container-orchestration",
+      "name": "Container Orchestration",
+      "description": "Kubernetes/AKS deployment and configuration",
+      "category": "devops",
+      "mediumEstimates": [
+        {
+          "roleId": "devops",
+          "hours": 48
+        },
+        {
+          "roleId": "sre",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "unit-tests",
+      "name": "Unit Testing",
+      "description": "Comprehensive unit test coverage (80%+)",
+      "category": "testing",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 40
+        },
+        {
+          "roleId": "qa",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "integration-tests",
+      "name": "Integration Testing",
+      "description": "API and database integration tests",
+      "category": "testing",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 32
+        },
+        {
+          "roleId": "qa",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "e2e-tests",
+      "name": "End-to-End Testing",
+      "description": "Automated E2E tests with Playwright/Cypress",
+      "category": "testing",
+      "mediumEstimates": [
+        {
+          "roleId": "qa",
+          "hours": 48
+        },
+        {
+          "roleId": "dev",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "performance-tests",
+      "name": "Performance Testing",
+      "description": "Load and stress testing",
+      "category": "testing",
+      "mediumEstimates": [
+        {
+          "roleId": "qa",
+          "hours": 32
+        },
+        {
+          "roleId": "sre",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "security-scan",
+      "name": "Security Scanning",
+      "description": "SAST/DAST security analysis",
+      "category": "security",
+      "mediumEstimates": [
+        {
+          "roleId": "security",
+          "hours": 24
+        },
+        {
+          "roleId": "devops",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "penetration-test",
+      "name": "Penetration Testing",
+      "description": "Security penetration testing and remediation",
+      "category": "security",
+      "mediumEstimates": [
+        {
+          "roleId": "security",
+          "hours": 40
+        },
+        {
+          "roleId": "dev",
+          "hours": 20
+        }
+      ]
+    },
+    {
+      "id": "compliance",
+      "name": "Compliance Implementation",
+      "description": "GDPR/SOC2/HIPAA compliance measures",
+      "category": "security",
+      "mediumEstimates": [
+        {
+          "roleId": "security",
+          "hours": 48
+        },
+        {
+          "roleId": "architect",
+          "hours": 16
+        },
+        {
+          "roleId": "dev",
+          "hours": 32
+        }
+      ]
+    },
+    {
+      "id": "data-encryption",
+      "name": "Data Encryption",
+      "description": "At-rest and in-transit encryption",
+      "category": "security",
+      "mediumEstimates": [
+        {
+          "roleId": "security",
+          "hours": 20
+        },
+        {
+          "roleId": "dev",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "responsive-design",
+      "name": "Responsive Design",
+      "description": "Mobile-first responsive UI implementation",
+      "category": "frontend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 36
+        },
+        {
+          "roleId": "ux",
+          "hours": 20
+        }
+      ]
+    },
+    {
+      "id": "accessibility",
+      "name": "Accessibility (WCAG 2.1)",
+      "description": "WCAG 2.1 AA compliance implementation",
+      "category": "frontend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 32
+        },
+        {
+          "roleId": "ux",
+          "hours": 16
+        },
+        {
+          "roleId": "qa",
+          "hours": 12
+        }
+      ]
+    },
+    {
+      "id": "i18n",
+      "name": "Internationalization",
+      "description": "Multi-language support with localization",
+      "category": "frontend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 28
+        },
+        {
+          "roleId": "ux",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "ui-components",
+      "name": "UI Component Library",
+      "description": "Reusable component library with Storybook",
+      "category": "frontend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 56
+        },
+        {
+          "roleId": "ux",
+          "hours": 24
+        }
+      ]
+    },
+    {
+      "id": "data-migration",
+      "name": "Data Migration",
+      "description": "Legacy system data migration",
+      "category": "backend",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 48
+        },
+        {
+          "roleId": "architect",
+          "hours": 12
+        },
+        {
+          "roleId": "qa",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "documentation",
+      "name": "Technical Documentation",
+      "description": "API docs, architecture diagrams, and user guides",
+      "category": "documentation",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 24
+        },
+        {
+          "roleId": "architect",
+          "hours": 16
+        }
+      ]
+    },
+    {
+      "id": "disaster-recovery",
+      "name": "Disaster Recovery Plan",
+      "description": "Backup, recovery, and business continuity setup",
+      "category": "devops",
+      "mediumEstimates": [
+        {
+          "roleId": "sre",
+          "hours": 32
+        },
+        {
+          "roleId": "devops",
+          "hours": 24
+        },
+        {
+          "roleId": "architect",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "analytics",
+      "name": "Analytics Integration",
+      "description": "Usage analytics and tracking implementation",
+      "category": "feature",
+      "mediumEstimates": [
+        {
+          "roleId": "dev",
+          "hours": 20
+        },
+        {
+          "roleId": "ux",
+          "hours": 8
         }
       ]
     }
