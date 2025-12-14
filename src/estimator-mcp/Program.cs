@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using EstimatorMcp.Tools;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ModelContextProtocol.Server;
 using Serilog;
 using Serilog.Events;
-using EstimatorMcp.Tools;
-using ModelContextProtocol.Server;
 
 namespace EstimatorMcp;
 
