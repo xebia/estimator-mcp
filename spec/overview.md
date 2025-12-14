@@ -43,19 +43,138 @@ B. Catalog Storage
 C. MCP Server Interface
 The MCP server exposes tools with detailed descriptions (used by LLM for tool selection):
 
-1. **instructions** (tool): Returns markdown document with overall guidance for the LLM on how to use the MCP server.
-2. **estimate** (tool): Accepts a list of tasks (with t-shirt sizing) and returns per-task, per-role time breakdown.
-3. **catalog-query** (tool): Allows LLM to search/browse available catalog items.
-4. Top-level MCP description directs the LLM to invoke the `instructions` tool first.
+1. **get_catalog_features** (tool): Returns a list of all available features from the catalog, including feature ID, name, and description. This allows the AI to present options to the user or search for relevant features.
+   - **Input**: Optional category filter
+   - **Output**: Array of objects with `id`, `name`, `description`, and `category` fields
+
+2. **calculate_estimate** (tool): Accepts a list of features (with feature IDs and t-shirt sizes) and returns the calculated time estimates per role for the entire project.
+   - **Input**: Array of objects with `featureId` and `size` (XS, S, M, L, XL)
+   - **Output**: Object with total hours per role and breakdown per feature/role
+   
+3. **get_instructions** (tool): Returns markdown document with overall guidance for the LLM on how to use the MCP server and interact with users to gather project requirements.
+   - **Input**: None
+   - **Output**: Markdown-formatted instructions
+
+4. Top-level MCP description directs the LLM to invoke the `get_instructions` tool first.
 
 D. AI/LLM Workflow (MVP)
 For the proof-of-concept:
-1. LLM interviews user to collect task/feature descriptions and t-shirt sizing.
-2. LLM calls MCP server `estimate` tool with selected tasks.
-3. MCP server returns time breakdown per role per task.
-4. LLM presents results to user; higher-level formatting/staffing plans are AI responsibility.
+1. LLM calls `get_instructions` tool to understand how to assist the user.
+2. LLM calls `get_catalog_features` to retrieve available features from the catalog.
+3. LLM interviews user to understand project scope, discussing features that match catalog items.
+4. LLM helps user select appropriate features and assign t-shirt sizes (XS, S, M, L, XL) based on project complexity.
+5. LLM calls `calculate_estimate` tool with the list of selected features and sizes.
+6. MCP server returns time breakdown per role per feature, plus totals.
+7. LLM presents results to user with appropriate formatting; higher-level staffing plans and scheduling are AI responsibility.
 
-5. 🗺️ Next Steps
+5. �️ MCP Tool Specifications
+
+### Tool: `get_catalog_features`
+
+**Purpose:** Retrieve all available features from the catalog for the AI to present to users.
+
+**Input Schema:**
+```json
+{
+  "category": "string (optional)"  // Filter by category (e.g., "feature", "integration", "devops")
+}
+```
+
+**Output Schema:**
+```json
+{
+  "features": [
+    {
+      "id": "basic-crud",
+      "name": "Basic CRUD Feature",
+      "description": "Implement create, read, update, delete operations for a domain entity",
+      "category": "feature"
+    },
+    // ... more features
+  ]
+}
+```
+
+### Tool: `calculate_estimate`
+
+**Purpose:** Calculate time estimates for a project based on selected features and their sizes.
+
+**Input Schema:**
+```json
+{
+  "features": [
+    {
+      "featureId": "basic-crud",
+      "size": "L"  // One of: XS, S, M, L, XL
+    },
+    {
+      "featureId": "api-integration",
+      "size": "M"
+    }
+    // ... more feature selections
+  ]
+}
+```
+
+**Output Schema:**
+```json
+{
+  "totalsByRole": {
+    "developer": {
+      "hours": 156.8,
+      "days": 19.6  // Based on 8-hour days
+    },
+    "devops": {
+      "hours": 24.0,
+      "days": 3.0
+    },
+    "em": {
+      "hours": 9.8,
+      "days": 1.225
+    }
+  },
+  "breakdown": [
+    {
+      "featureId": "basic-crud",
+      "featureName": "Basic CRUD Feature",
+      "size": "L",
+      "estimates": {
+        "developer": {
+          "baseHours": 38.4,  // M baseline (24) * L multiplier (1.6)
+          "copilotMultiplier": 0.70,
+          "finalHours": 26.88
+        },
+        "devops": {
+          "baseHours": 6.4,
+          "copilotMultiplier": 0.75,
+          "finalHours": 4.8
+        },
+        "em": {
+          "baseHours": 3.2,
+          "copilotMultiplier": 1.0,
+          "finalHours": 3.2
+        }
+      }
+    }
+    // ... breakdown for each feature
+  ]
+}
+```
+
+### Tool: `get_instructions`
+
+**Purpose:** Provide guidance to the AI on how to interact with users and use the MCP server.
+
+**Input Schema:** None
+
+**Output:** Markdown document with:
+- Overview of the estimation process
+- How to help users identify and size features
+- Best practices for conducting estimation interviews
+- Example conversations and outputs
+- Guidance on presenting results
+
+6. �🗺️ Next Steps
 
 **Phase 1 (MVP):**
 1. **Catalog Definition:** Conduct exercise to identify core tasks/features with historical time estimates per role; apply Copilot productivity multipliers.
