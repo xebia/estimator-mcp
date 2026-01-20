@@ -7,6 +7,14 @@
 
 <h1>Roles</h1>
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+
 <div class="mb-3">
     <button class="btn btn-primary" @onclick="CreateNew">
         <i class="bi bi-plus-circle"></i> Create New Role
@@ -53,6 +61,7 @@ else
 
 @code {
     private List<Role>? roles;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,11 +85,24 @@ else
 
     private async Task Delete(string id)
     {
+        ClearError();
         if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete role '{id}'?"))
         {
-            await DataProvider.DeleteRoleAsync(id);
-            await LoadRoles();
+            try
+            {
+                await DataProvider.DeleteRoleAsync(id);
+                await LoadRoles();
+            }
+            catch (ReferentialIntegrityException ex)
+            {
+                errorMessage = $"Cannot delete role '{id}' because it is referenced by: {string.Join(", ", ex.ReferencingEntities)}";
+            }
         }
+    }
+
+    private void ClearError()
+    {
+        errorMessage = null;
     }
 
     [Inject]

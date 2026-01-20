@@ -108,6 +108,17 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
         var role = catalog.Roles.FirstOrDefault(r => r.Id == id);
         if (role != null)
         {
+            // Check referential integrity
+            var referencingEntries = catalog.Catalog
+                .Where(e => e.MediumEstimates.Any(m => m.RoleId == id))
+                .Select(e => e.Name)
+                .ToList();
+
+            if (referencingEntries.Any())
+            {
+                throw new ReferentialIntegrityException("Role", id, referencingEntries);
+            }
+
             catalog.Roles.Remove(role);
             await SaveCatalogAsync(catalog);
         }
@@ -129,6 +140,20 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
     public async Task SaveCatalogEntryAsync(CatalogEntry entry)
     {
         var catalog = await LoadCatalogAsync();
+
+        // Validate role references
+        var roleIds = catalog.Roles.Select(r => r.Id).ToHashSet();
+        var invalidRoleIds = entry.MediumEstimates
+            .Select(m => m.RoleId)
+            .Where(id => !roleIds.Contains(id))
+            .Distinct()
+            .ToList();
+
+        if (invalidRoleIds.Any())
+        {
+            throw new InvalidRoleReferenceException(invalidRoleIds);
+        }
+
         var existing = catalog.Catalog.FirstOrDefault(e => e.Id == entry.Id);
         if (existing != null)
         {
@@ -147,5 +172,31 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
             catalog.Catalog.Remove(entry);
             await SaveCatalogAsync(catalog);
         }
+    }
+
+    // Referential Integrity
+    public async Task<bool> IsRoleReferencedAsync(string roleId)
+    {
+        var catalog = await LoadCatalogAsync();
+        return catalog.Catalog.Any(e => e.MediumEstimates.Any(m => m.RoleId == roleId));
+    }
+
+    public async Task<List<CatalogEntry>> GetEntriesReferencingRoleAsync(string roleId)
+    {
+        var catalog = await LoadCatalogAsync();
+        return catalog.Catalog
+            .Where(e => e.MediumEstimates.Any(m => m.RoleId == roleId))
+            .ToList();
+    }
+
+    public async Task<List<string>> ValidateRoleReferencesAsync(CatalogEntry entry)
+    {
+        var catalog = await LoadCatalogAsync();
+        var roleIds = catalog.Roles.Select(r => r.Id).ToHashSet();
+        return entry.MediumEstimates
+            .Select(m => m.RoleId)
+            .Where(id => !roleIds.Contains(id))
+            .Distinct()
+            .ToList();
     }
 }

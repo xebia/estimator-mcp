@@ -8,6 +8,14 @@
 
 <h1>@(IsNew ? "Create New Catalog Entry" : "Edit Catalog Entry")</h1>
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+
 @if (entry == null || roles == null)
 {
     <p><em>Loading...</em></p>
@@ -94,6 +102,7 @@ else
 
     private CatalogEntry entry = new();
     private List<Role>? roles;
+    private string? errorMessage;
     private bool IsNew => string.IsNullOrEmpty(Id);
 
     protected override async Task OnInitializedAsync()
@@ -130,8 +139,21 @@ else
 
     private async Task Save()
     {
-        await DataProvider.SaveCatalogEntryAsync(entry);
-        Navigation.NavigateTo("/catalog");
+        ClearError();
+        try
+        {
+            await DataProvider.SaveCatalogEntryAsync(entry);
+            Navigation.NavigateTo("/catalog");
+        }
+        catch (InvalidRoleReferenceException ex)
+        {
+            errorMessage = $"Cannot save: Invalid role references: {string.Join(", ", ex.InvalidRoleIds)}";
+        }
+    }
+
+    private void ClearError()
+    {
+        errorMessage = null;
     }
 
     private void Cancel()
