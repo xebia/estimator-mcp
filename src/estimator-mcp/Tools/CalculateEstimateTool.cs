@@ -133,14 +133,14 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
                 return $"Validation errors:\n{string.Join("\n", errors)}";
             }
 
-            // Calculate size multipliers
+            // Calculate size multipliers (Fibonacci scaling: 1, 2, 5, 8, 13 normalized to M=5)
             var sizeMultipliers = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
             {
-                { "XS", 0.5m },
-                { "S", 0.75m },
-                { "M", 1.0m },
-                { "L", 1.5m },
-                { "XL", 2.0m }
+                { "XS", 1m / 5m },    // 0.2x (Fibonacci: 1)
+                { "S", 2m / 5m },     // 0.4x (Fibonacci: 2)
+                { "M", 1m },          // 1.0x (Fibonacci: 5, baseline)
+                { "L", 8m / 5m },     // 1.6x (Fibonacci: 8)
+                { "XL", 13m / 5m }    // 2.6x (Fibonacci: 13)
             };
 
             // Calculate estimates
