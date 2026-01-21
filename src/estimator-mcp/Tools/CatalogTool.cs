@@ -59,9 +59,11 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
         return catalogFiles[0];
     }
 
-    [McpServerTool, Description("Returns the list of all catalog features with their IDs, names, descriptions, and categories. Optionally filter by category.")]
+    [McpServerTool, Description("Returns the list of all catalog features with their IDs, names, descriptions, and categories. Optionally filter by category, tech stack, or tags.")]
     public async Task<string> GetCatalogFeatures(
-        [Description("Optional category filter (e.g., 'feature', 'infrastructure'). If not provided, returns all features.")] string? category = null)
+        [Description("Optional category filter (e.g., 'feature', 'infrastructure'). If not provided, returns all features.")] string? category = null,
+        [Description("Optional tech stack filter (e.g., 'salesforce', 'blazor-azure', 'nodejs', 'shared'). Filters features by technology platform.")] string? techStack = null,
+        [Description("Optional tag filter (e.g., 'apex', 'frontend', 'api'). Returns features that include this tag.")] string? tag = null)
     {
         try
         {
@@ -79,29 +81,56 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
                 return "Error: Failed to parse catalog data";
             }
 
-            var features = catalogData.Catalog;
+            var features = catalogData.Catalog.AsEnumerable();
             
             // Apply category filter if provided
-            if (!string.IsNullOrEmpty(category))
+            if (!string.IsNullOrWhiteSpace(category))
             {
-                features = features.Where(f => f.Category.Equals(category, StringComparison.OrdinalIgnoreCase)).ToList();
+                features = features.Where(f => f.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+                logger.LogInformation("[CatalogTool.GetCatalogFeatures] Applied category filter: {Category}", category);
             }
+
+            // Apply tech stack filter if provided
+            if (!string.IsNullOrWhiteSpace(techStack))
+            {
+                features = features.Where(f => f.TechStack != null && 
+                                             f.TechStack.Equals(techStack, StringComparison.OrdinalIgnoreCase));
+                logger.LogInformation("[CatalogTool.GetCatalogFeatures] Applied tech stack filter: {TechStack}", techStack);
+            }
+
+            // Apply tag filter if provided
+            if (!string.IsNullOrWhiteSpace(tag))
+            {
+                features = features.Where(f => f.Tags != null && 
+                                             f.Tags.Any(t => t.Equals(tag, StringComparison.OrdinalIgnoreCase)));
+                logger.LogInformation("[CatalogTool.GetCatalogFeatures] Applied tag filter: {Tag}", tag);
+            }
+
+            var featureList = features.ToList();
 
             var result = new
             {
                 catalogFile = Path.GetFileName(catalogFile),
                 timestamp = catalogData.Timestamp,
-                totalFeatures = features.Count,
-                features = features.Select(f => new
+                totalFeatures = featureList.Count,
+                appliedFilters = new
+                {
+                    category = category,
+                    techStack = techStack,
+                    tag = tag
+                },
+                features = featureList.Select(f => new
                 {
                     id = f.Id,
                     name = f.Name,
                     description = f.Description,
-                    category = f.Category
+                    category = f.Category,
+                    techStack = f.TechStack,
+                    tags = f.Tags
                 }).ToList()
             };
 
-            logger.LogInformation("[CatalogTool.GetCatalogFeatures] Returned {Count} features", features.Count);
+            logger.LogInformation("[CatalogTool.GetCatalogFeatures] Returned {Count} features", featureList.Count);
             
             return JsonSerializer.Serialize(result, new JsonSerializerOptions
             {
@@ -111,6 +140,61 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
         catch (Exception ex)
         {
             logger.LogError(ex, "[CatalogTool.GetCatalogFeatures] Error loading catalog");
+            return $"Error loading catalog: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Returns a summary of all available tech stacks in the catalog with feature counts and descriptions.")]
+    public async Task<string> GetCatalogTechStacks()
+    {
+        try
+        {
+            var catalogFile = GetLatestCatalogFile();
+            logger.LogInformation("[CatalogTool.GetCatalogTechStacks] Loading catalog from {FilePath}", catalogFile);
+
+            var json = await File.ReadAllTextAsync(catalogFile);
+            var catalogData = JsonSerializer.Deserialize<CatalogData>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (catalogData == null)
+            {
+                return "Error: Failed to parse catalog data";
+            }
+
+            // Group features by tech stack and count them
+            var techStackGroups = catalogData.Catalog
+                .GroupBy(f => f.TechStack ?? "unspecified")
+                .Select(g => new
+                {
+                    techStack = g.Key,
+                    featureCount = g.Count(),
+                    categories = g.Select(f => f.Category).Distinct().OrderBy(c => c).ToList(),
+                    sampleFeatures = g.Take(3).Select(f => new { f.Id, f.Name }).ToList()
+                })
+                .OrderByDescending(g => g.featureCount)
+                .ToList();
+
+            var result = new
+            {
+                catalogFile = Path.GetFileName(catalogFile),
+                timestamp = catalogData.Timestamp,
+                totalTechStacks = techStackGroups.Count,
+                totalFeatures = catalogData.Catalog.Count,
+                techStacks = techStackGroups
+            };
+
+            logger.LogInformation("[CatalogTool.GetCatalogTechStacks] Returned {Count} tech stacks", techStackGroups.Count);
+            
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[CatalogTool.GetCatalogTechStacks] Error loading catalog");
             return $"Error loading catalog: {ex.Message}";
         }
     }

@@ -48,6 +48,26 @@ else
             <div class="form-text">Optional grouping (e.g., "feature", "integration", "devops", "data", "qa").</div>
         </div>
 
+        <div class="mb-3">
+            <label for="techStack" class="form-label">Tech Stack</label>
+            <InputSelect id="techStack" class="form-control" @bind-Value="entry.TechStack">
+                <option value="">-- Any/Shared --</option>
+                <option value="salesforce">Salesforce</option>
+                <option value="blazor-azure">Blazor/Azure</option>
+                <option value="nodejs">Node.js</option>
+                <option value="react-aws">React/AWS</option>
+                <option value="dotnet">ASP.NET Core</option>
+                <option value="shared">Shared (cross-platform)</option>
+            </InputSelect>
+            <div class="form-text">Technology platform for this feature. Used for filtering in tech-specific projects.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="tags" class="form-label">Tags</label>
+            <InputText id="tags" class="form-control" @bind-Value="tagsString" placeholder="frontend, api, authentication" />
+            <div class="form-text">Comma-separated tags for flexible categorization (e.g., "apex, backend, integration").</div>
+        </div>
+
         <h3>Medium (M) Estimates by Role</h3>
         <p class="text-muted">Enter baseline hours for Medium size. Other sizes (XS, S, L, XL) are calculated using Fibonacci scaling.</p>
 
@@ -104,6 +124,26 @@ else
     private List<Role>? roles;
     private string? errorMessage;
     private bool IsNew => string.IsNullOrEmpty(Id);
+
+    // Helper property to bind tags as a comma-separated string
+    private string tagsString
+    {
+        get => entry.Tags != null ? string.Join(", ", entry.Tags) : string.Empty;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                entry.Tags = null;
+            }
+            else
+            {
+                entry.Tags = value.Split(',')
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList();
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
