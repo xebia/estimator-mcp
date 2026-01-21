@@ -1,0 +1,9 @@
+﻿Id	Name	Description	CopilotMultiplier
+architect	Solution Architect	Technical architecture and system design	0.8
+dev	Developer	Full-stack developer with modern tooling	0.6
+devops	DevOps engineer	Infrastructure and deployment automation specialist	0.7
+em	Engagement manager	Manages client relationships and project planning	1.0
+qa	QA Engineer	Quality assurance and test automation	0.65
+security	Security Engineer	Security assessment and implementation	0.85
+sre	SRE	Site reliability engineer	1.0
+ux	UX Designer	User experience and interface design	0.9

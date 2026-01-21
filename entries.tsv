@@ -1,0 +1,39 @@
+﻿Id	Name	Description	Category	architect	dev	devops	em	qa	security	sre	ux
+api-rest	REST API Development	RESTful API with OpenAPI/Swagger documentation	backend	8	60						
+caching	Caching Layer	Redis/in-memory caching implementation	backend	4	24						
+data-migration	Data Migration	Legacy system data migration	backend	12	48			16			
+database-design	Database Design & Implementation	Schema design, migrations, and optimization	backend	12	40						
+message-queue	Message Queue Integration	Async processing with RabbitMQ/Azure Service Bus	backend	8	36						
+cd-setup	CD Deployment Pipeline	Automated deployment to staging and production	devops			28				8	
+ci-setup	CI build setup	Automated build pipeline with testing	devops			20					
+container-orchestration	Container Orchestration	Kubernetes/AKS deployment and configuration	devops			48				16	
+disaster-recovery	Disaster Recovery Plan	Backup, recovery, and business continuity setup	devops	8		24				32	
+infrastructure	Infrastructure as Code	Terraform/ARM templates for cloud resources	devops	8		40					
+logging	Centralized Logging	Log aggregation and analysis platform	devops			20				12	
+monitoring	Monitoring & Alerting	Application monitoring with metrics and alerts	devops			24				16	
+documentation	Technical Documentation	API docs, architecture diagrams, and user guides	documentation	16	24						
+Entity editor	Entity add/edit/remove	CRUD operations for core entities	feature		20		0.5				
+Main screen	Main screen	Dashboard with key metrics and navigation	feature		40		0.5				16
+analytics	Analytics Integration	Usage analytics and tracking implementation	feature		20						8
+api-integration	Third-Party API Integration	Integration with external REST/GraphQL APIs	feature	6	32						
+audit-log	Audit Logging	Comprehensive audit trail for all actions	feature		24				4		
+data-grid	Advanced Data Grid	Filterable, sortable data grid with pagination and export	feature		32						8
+file-upload	File Upload/Download	File management with cloud storage integration	feature		28				4		
+notifications	Notification System	In-app and email notifications	feature		36						6
+real-time	Real-Time Updates	WebSocket/SignalR for live data updates	feature	4	40						
+reporting	Reporting Module	Custom reports with export to PDF/Excel	feature		48						12
+search	Search Functionality	Full-text search with filters and facets	feature	4	40						
+user-auth	User Authentication	OAuth2/OIDC authentication with SSO support	feature		30		1.0		8		
+user-authorization	Role-Based Access Control	RBAC with permissions and role management	feature		24		0.5		6		
+accessibility	Accessibility (WCAG 2.1)	WCAG 2.1 AA compliance implementation	frontend		32			12			16
+i18n	Internationalization	Multi-language support with localization	frontend		28						8
+responsive-design	Responsive Design	Mobile-first responsive UI implementation	frontend		36						20
+ui-components	UI Component Library	Reusable component library with Storybook	frontend		56						24
+compliance	Compliance Implementation	GDPR/SOC2/HIPAA compliance measures	security	16	32				48		
+data-encryption	Data Encryption	At-rest and in-transit encryption	security		16				20		
+penetration-test	Penetration Testing	Security penetration testing and remediation	security		20				40		
+security-scan	Security Scanning	SAST/DAST security analysis	security			8			24		
+e2e-tests	End-to-End Testing	Automated E2E tests with Playwright/Cypress	testing		16			48			
+integration-tests	Integration Testing	API and database integration tests	testing		32			16			
+performance-tests	Performance Testing	Load and stress testing	testing					32		16	
+unit-tests	Unit Testing	Comprehensive unit test coverage (80%+)	testing		40			8			
