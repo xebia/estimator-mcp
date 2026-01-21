@@ -97,15 +97,15 @@ public class TsvImporter
 
         var header = ParseTsvLine(lines[0]);
 
-        // Validate minimum header columns
-        if (header.Length < 4)
+        // Validate minimum header columns (now 6 with TechStack and Tags)
+        if (header.Length < 6)
         {
-            errors.Add(new ValidationError("entries.tsv", 1, "Header must have at least 4 columns (Id, Name, Description, Category)"));
+            errors.Add(new ValidationError("entries.tsv", 1, "Header must have at least 6 columns (Id, Name, Description, Category, TechStack, Tags)"));
             return entries;
         }
 
         // Fixed columns
-        var fixedColumns = new[] { "Id", "Name", "Description", "Category" };
+        var fixedColumns = new[] { "Id", "Name", "Description", "Category", "TechStack", "Tags" };
         for (int i = 0; i < fixedColumns.Length; i++)
         {
             if (!string.Equals(header[i], fixedColumns[i], StringComparison.OrdinalIgnoreCase))
@@ -114,8 +114,8 @@ public class TsvImporter
             }
         }
 
-        // Role columns start at index 4
-        var roleColumns = header.Skip(4).ToArray();
+        // Role columns start at index 6 (after the 6 fixed columns)
+        var roleColumns = header.Skip(6).ToArray();
 
         // Validate role columns exist in roles.tsv
         foreach (var roleColumn in roleColumns)
@@ -138,9 +138,9 @@ public class TsvImporter
 
             var fields = ParseTsvLine(line);
 
-            if (fields.Length < 4)
+            if (fields.Length < 6)
             {
-                errors.Add(new ValidationError("entries.tsv", rowNumber, $"Expected at least 4 columns, found {fields.Length}"));
+                errors.Add(new ValidationError("entries.tsv", rowNumber, $"Expected at least 6 columns, found {fields.Length}"));
                 continue;
             }
 
@@ -148,6 +148,8 @@ public class TsvImporter
             var name = fields[1].Trim();
             var description = fields[2].Trim();
             var category = fields[3].Trim();
+            var techStack = fields[4].Trim();
+            var tagsStr = fields[5].Trim();
 
             // Validate required fields
             if (string.IsNullOrEmpty(id))
@@ -168,12 +170,26 @@ public class TsvImporter
                 continue;
             }
 
+            // Parse tags from semicolon-separated string
+            List<string>? tags = null;
+            if (!string.IsNullOrWhiteSpace(tagsStr))
+            {
+                tags = tagsStr.Split(';')
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList();
+                
+                // If no valid tags after parsing, set to null
+                if (tags.Count == 0)
+                    tags = null;
+            }
+
             var estimates = new List<MediumEstimate>();
 
-            // Parse role estimates
+            // Parse role estimates (now starting at index 6)
             for (int j = 0; j < roleColumns.Length; j++)
             {
-                var fieldIndex = 4 + j;
+                var fieldIndex = 6 + j;
                 var hoursStr = fieldIndex < fields.Length ? fields[fieldIndex].Trim() : string.Empty;
 
                 if (string.IsNullOrEmpty(hoursStr))
@@ -198,6 +214,8 @@ public class TsvImporter
                 Name = name,
                 Description = description,
                 Category = category,
+                TechStack = string.IsNullOrWhiteSpace(techStack) ? null : techStack,
+                Tags = tags,
                 MediumEstimates = estimates
             });
         }
