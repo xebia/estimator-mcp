@@ -1,0 +1,2114 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-01-21T17:53:08.2926816Z",
+  "roles": [
+    {
+      "id": "architect",
+      "name": "Solution Architect",
+      "description": "Technical architecture and system design",
+      "copilotMultiplier": 0.8
+    },
+    {
+      "id": "dev",
+      "name": "Developer",
+      "description": "Full-stack developer with modern tooling",
+      "copilotMultiplier": 0.6
+    },
+    {
+      "id": "devops",
+      "name": "DevOps engineer",
+      "description": "Infrastructure and deployment automation specialist",
+      "copilotMultiplier": 0.7
+    },
+    {
+      "id": "em",
+      "name": "Engagement manager",
+      "description": "Manages client relationships and project planning",
+      "copilotMultiplier": 1.0
+    },
+    {
+      "id": "qa",
+      "name": "QA Engineer",
+      "description": "Quality assurance and test automation",
+      "copilotMultiplier": 0.65
+    },
+    {
+      "id": "security",
+      "name": "Security Engineer",
+      "description": "Security assessment and implementation",
+      "copilotMultiplier": 0.85
+    },
+    {
+      "id": "ux",
+      "name": "UX Designer",
+      "description": "User experience and interface design",
+      "copilotMultiplier": 0.9
+    }
+  ],
+  "catalog": [
+    {
+      "id": "sf-apex-class-development",
+      "name": "Apex Class Development",
+      "description": "Custom Apex class/service \u002B unit tests (per class/service).",
+      "category": "automation-flow-apex-orchestration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "apex",
+        "backend"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 16
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-batch-queueable-job",
+      "name": "Batch/Queueable Job",
+      "description": "Async processing \u002B tests \u002B monitoring hooks (per job).",
+      "category": "automation-flow-apex-orchestration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "apex",
+        "async",
+        "batch"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 20
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 8
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-record-triggered-flow-complex",
+      "name": "Record-Triggered Flow (Complex)",
+      "description": "Multi-object, async paths, retries/logging patterns (per flow).",
+      "category": "automation-flow-apex-orchestration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "flow",
+        "record-triggered",
+        "complex"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 3
+        },
+        {
+          "roleId": "dev",
+          "hours": 10
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-record-triggered-flow-simple",
+      "name": "Record-Triggered Flow (Simple)",
+      "description": "Basic before/after-save automation affecting 1\u20132 objects (per flow).",
+      "category": "automation-flow-apex-orchestration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "flow",
+        "record-triggered"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 3
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 2
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-screen-flow-complex",
+      "name": "Screen Flow (Complex)",
+      "description": "Multi-step flow with subflows, uploads, complex branching, robust error handling (per flow).",
+      "category": "automation-flow-apex-orchestration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "flow",
+        "screen-flow",
+        "complex"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 16
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 12
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-screen-flow-simple",
+      "name": "Screen Flow (Simple)",
+      "description": "Single-object screen flow with basic branching and save/update (per flow).",
+      "category": "automation-flow-apex-orchestration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "flow",
+        "screen-flow"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 6
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 4
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-subflow-module",
+      "name": "Reusable Subflow Module",
+      "description": "Create reusable subflow, inputs/outputs, documentation, tests (per module).",
+      "category": "automation-flow-apex-orchestration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "flow",
+        "subflow",
+        "reusable"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 10
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 4
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-approval-process",
+      "name": "Approval Process",
+      "description": "Configure approval steps, entry criteria, actions, notifications, and testing (per process).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "approval",
+        "automation"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 6
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 4
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-custom-fields-bundle-10",
+      "name": "Custom Fields Bundle (10)",
+      "description": "Create/configure 10 fields including help text (per 10 fields).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "fields",
+        "configuration"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 3
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-custom-object-build",
+      "name": "Custom Object Build",
+      "description": "Create custom object, tabs, key settings, basic configuration (per object).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "object",
+        "configuration"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-domain-model-design",
+      "name": "Domain Model Design",
+      "description": "Define object boundaries, relationships, key attributes, naming standards (per object/domain slice).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "data-model",
+        "architecture"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 3
+        },
+        {
+          "roleId": "dev",
+          "hours": 3
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-duplicate-management",
+      "name": "Duplicate Management",
+      "description": "Matching rules \u002B duplicate rules \u002B UX considerations and test scenarios (per object).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "duplicate-rules",
+        "matching-rules"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 4
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 2
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-email-template",
+      "name": "Email Template",
+      "description": "Create template with merge fields and basic testing (per template).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "email",
+        "template"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.25
+        },
+        {
+          "roleId": "dev",
+          "hours": 0.75
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.1
+        }
+      ]
+    },
+    {
+      "id": "sf-notification-custom",
+      "name": "Custom Notification",
+      "description": "Notification type \u002B delivery setup \u002B tests (per notification).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "notification",
+        "automation"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-record-types-layouts",
+      "name": "Record Types \u002B Page Layouts",
+      "description": "Configure record type, page layout, assignments, related list behavior (per record type).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "record-type",
+        "page-layout"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-validation-rules-bundle-5",
+      "name": "Validation Rules Bundle (5)",
+      "description": "Create/adjust 5 validation rules including messages and test cases (per 5 rules).",
+      "category": "core-data-model-and-configuration",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "validation",
+        "data-quality"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 3
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 1
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-etl-job-complex",
+      "name": "ETL Job (Complex)",
+      "description": "Complex transforms, rekeys, dedupe, crosswalks, reconciliation (per object).",
+      "category": "data-migration-and-data-operations",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "etl",
+        "complex-transform"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 6
+        },
+        {
+          "roleId": "dev",
+          "hours": 16
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-etl-job-simple",
+      "name": "ETL Job (Simple)",
+      "description": "Load with basic transforms, lookups, error files, reconciliation (per object).",
+      "category": "data-migration-and-data-operations",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "etl",
+        "data-loader"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 6
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 2
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-mapping-workbook",
+      "name": "Mapping Workbook (Per Object)",
+      "description": "Source-to-target mapping, transforms, owners, acceptance checks (per object).",
+      "category": "data-migration-and-data-operations",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "data-mapping",
+        "migration"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1
+        },
+        {
+          "roleId": "dev",
+          "hours": 0.5
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-migration-strategy-runbook",
+      "name": "Migration Strategy \u002B Runbook",
+      "description": "Migration approach, sequencing, mock loads, cutover plan, rollback approach (per project).",
+      "category": "data-migration-and-data-operations",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "data-migration",
+        "runbook"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 7
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-migration-test-cycle",
+      "name": "Migration Test Cycle",
+      "description": "Mock load \u002B reconciliation \u002B defect fixes (per cycle).",
+      "category": "data-migration-and-data-operations",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "migration",
+        "testing"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 8
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-discovery-workshop-1hr",
+      "name": "Discovery Workshop (1 hr)",
+      "description": "Facilitate workshop \u002B notes \u002B outcomes (per session).",
+      "category": "delivery-management-and-requirements",
+      "techStack": "salesforce",
+      "tags": [
+        "discovery",
+        "requirements",
+        "workshop"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1.25
+        },
+        {
+          "roleId": "dev",
+          "hours": 0
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 0
+        }
+      ]
+    },
+    {
+      "id": "sf-hld-domain",
+      "name": "High-Level Design (HLD)",
+      "description": "HLD for a domain: NFRs, integration touchpoints, risks (per domain).",
+      "category": "delivery-management-and-requirements",
+      "techStack": "salesforce",
+      "tags": [
+        "architecture",
+        "hld",
+        "design"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 5
+        },
+        {
+          "roleId": "dev",
+          "hours": 0.5
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-lld-component",
+      "name": "Low-Level Design (LLD)",
+      "description": "Detailed design \u002B sequence/limit considerations (per complex component).",
+      "category": "delivery-management-and-requirements",
+      "techStack": "salesforce",
+      "tags": [
+        "architecture",
+        "lld",
+        "design"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-sprint-ceremonies",
+      "name": "Sprint Ceremonies (Per Sprint)",
+      "description": "Planning/review/retro \u002B backlog grooming (per sprint).",
+      "category": "delivery-management-and-requirements",
+      "techStack": "salesforce",
+      "tags": [
+        "agile",
+        "ceremonies",
+        "delivery"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 4
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 0
+        }
+      ]
+    },
+    {
+      "id": "sf-user-story-ac",
+      "name": "User Story \u002B Acceptance Criteria",
+      "description": "Write story, AC, dependencies, test notes (per story).",
+      "category": "delivery-management-and-requirements",
+      "techStack": "salesforce",
+      "tags": [
+        "requirements",
+        "user-story",
+        "backlog"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 0.25
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 0
+        }
+      ]
+    },
+    {
+      "id": "sf-cicd-pipeline",
+      "name": "CI/CD Pipeline Setup",
+      "description": "Repo, validate/deploy automation, quality gates (per org).",
+      "category": "devops-environments-testing-release",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "cicd",
+        "devops"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 6
+        },
+        {
+          "roleId": "dev",
+          "hours": 8
+        },
+        {
+          "roleId": "devops",
+          "hours": 12
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 2
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-environment-strategy",
+      "name": "Environment Strategy",
+      "description": "Sandbox strategy, branching, release train (per project).",
+      "category": "devops-environments-testing-release",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "devops",
+        "environments"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 1
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-release-deployment",
+      "name": "Release Deployment",
+      "description": "Pre-checks, deploy, post-validate, rollback prep (per release).",
+      "category": "devops-environments-testing-release",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "release",
+        "deployment"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 6
+        },
+        {
+          "roleId": "devops",
+          "hours": 2
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 4
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-sit-support-sprint",
+      "name": "SIT Support (Per Sprint)",
+      "description": "Defect triage, fixes, re-test coordination (per sprint).",
+      "category": "devops-environments-testing-release",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "sit",
+        "testing"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 6
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-test-strategy-rtm",
+      "name": "Test Strategy \u002B RTM Approach",
+      "description": "Test levels, traceability method, entry/exit criteria (per project).",
+      "category": "devops-environments-testing-release",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "testing",
+        "rtm"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-uat-support-sprint",
+      "name": "UAT Support (Per Sprint)",
+      "description": "Support execution, defect turnaround, readiness reporting (per sprint).",
+      "category": "devops-environments-testing-release",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "uat",
+        "testing"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 8
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 3
+        },
+        {
+          "roleId": "qa",
+          "hours": 8
+        },
+        {
+          "roleId": "security",
+          "hours": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sf-experience-site-setup",
+      "name": "Experience Cloud Site Setup",
+      "description": "Create Experience site, theme, baseline pages, navigation, initial access model (per site).",
+      "category": "experience-cloud-portal",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "experience-cloud",
+        "portal"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 3
+        },
+        {
+          "roleId": "dev",
+          "hours": 6
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 3
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-guest-user-hardening",
+      "name": "Guest User Hardening Review",
+      "description": "Least privilege, exposure review, vulnerability checks, remediation list (per site).",
+      "category": "experience-cloud-portal",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "portal",
+        "guest-user",
+        "security"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 2
+        },
+        {
+          "roleId": "security",
+          "hours": 8
+        }
+      ]
+    },
+    {
+      "id": "sf-portal-auth-flows",
+      "name": "Portal Registration/Login",
+      "description": "Self-reg/login flow \u002B email \u002B error states \u002B tests (per site).",
+      "category": "experience-cloud-portal",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "portal",
+        "auth",
+        "flow"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 5
+        },
+        {
+          "roleId": "dev",
+          "hours": 10
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "sf-portal-process-flow-complex",
+      "name": "Portal Process Flow (Complex)",
+      "description": "End-to-end submission with uploads \u002B status mgmt \u002B notifications (per process).",
+      "category": "experience-cloud-portal",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "portal",
+        "flow",
+        "complex"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 6
+        },
+        {
+          "roleId": "dev",
+          "hours": 16
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 12
+        },
+        {
+          "roleId": "security",
+          "hours": 3
+        }
+      ]
+    },
+    {
+      "id": "sf-auth-named-credential",
+      "name": "Named Credential \u002B Auth Setup",
+      "description": "Named Credential/Auth Provider config, secrets handling, connectivity verification (per system).",
+      "category": "integration-and-apis",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "named-credential",
+        "auth"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 3
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 1
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 1
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-integration-architecture",
+      "name": "Integration Architecture",
+      "description": "Patterns, auth, limits, data contracts, sequencing, NFRs (per project).",
+      "category": "integration-and-apis",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "integration",
+        "architecture"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-integration-monitoring",
+      "name": "Integration Monitoring \u002B Alerting",
+      "description": "Dashboards, alerts, logs, runbook updates (per system).",
+      "category": "integration-and-apis",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "monitoring",
+        "ops"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 4
+        },
+        {
+          "roleId": "dev",
+          "hours": 6
+        },
+        {
+          "roleId": "devops",
+          "hours": 2
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 2
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-rest-callout-complex",
+      "name": "REST Callout (Complex)",
+      "description": "Pagination, idempotency, DLQ/retry, advanced mapping, robust tests (per endpoint).",
+      "category": "integration-and-apis",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "rest",
+        "callout",
+        "complex"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 10
+        },
+        {
+          "roleId": "dev",
+          "hours": 24
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 2
+        },
+        {
+          "roleId": "qa",
+          "hours": 12
+        },
+        {
+          "roleId": "security",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "sf-rest-callout-simple",
+      "name": "REST Callout (Simple)",
+      "description": "One endpoint, basic mapping, retries, unit tests, basic monitoring hooks (per endpoint).",
+      "category": "integration-and-apis",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "rest",
+        "callout",
+        "apex"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 6
+        },
+        {
+          "roleId": "dev",
+          "hours": 12
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-dashboard",
+      "name": "Dashboard",
+      "description": "5\u20138 components \u002B subscriptions \u002B validation (per dashboard).",
+      "category": "reports-dashboards-analytics",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "dashboard",
+        "analytics"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 3
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 1.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-report-complex",
+      "name": "Report (Complex)",
+      "description": "Formulas, complex filters, row-level nuances (per report).",
+      "category": "reports-dashboards-analytics",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "reporting",
+        "complex"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 1.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-report-simple",
+      "name": "Report (Simple)",
+      "description": "Basic report with filters and validation (per report).",
+      "category": "reports-dashboards-analytics",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "reporting",
+        "report"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 0.5
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0
+        }
+      ]
+    },
+    {
+      "id": "sf-advanced-sharing-pattern",
+      "name": "Advanced Sharing Pattern (Apex/Manual)",
+      "description": "Implement programmatic/manual sharing pattern and unit tests (per object/use case).",
+      "category": "security-and-access",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "apex-sharing",
+        "security"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 3
+        },
+        {
+          "roleId": "dev",
+          "hours": 16
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 6
+        },
+        {
+          "roleId": "security",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "sf-fls-matrix",
+      "name": "FLS/CRUD Matrix",
+      "description": "Define and validate field-level \u002B object permissions for a persona across an object set (per persona \u00D7 object set).",
+      "category": "security-and-access",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "fls",
+        "crud",
+        "security"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 1
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-persona-access-package",
+      "name": "Persona Access Package",
+      "description": "Profiles/perm sets/permission set groups \u002B object/field permissions and smoke tests (per persona).",
+      "category": "security-and-access",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "perm-sets",
+        "profiles",
+        "psg"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 2
+        },
+        {
+          "roleId": "dev",
+          "hours": 3
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.5
+        },
+        {
+          "roleId": "qa",
+          "hours": 2
+        },
+        {
+          "roleId": "security",
+          "hours": 2
+        }
+      ]
+    },
+    {
+      "id": "sf-sharing-model-design",
+      "name": "Sharing Model Design",
+      "description": "Define OWD, role hierarchy strategy, sharing mechanisms, and access assumptions (org-wide baseline).",
+      "category": "security-and-access",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "security",
+        "sharing",
+        "architecture"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 5
+        },
+        {
+          "roleId": "dev",
+          "hours": 1
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 1
+        },
+        {
+          "roleId": "qa",
+          "hours": 0
+        },
+        {
+          "roleId": "security",
+          "hours": 4
+        }
+      ]
+    },
+    {
+      "id": "sf-sharing-rule",
+      "name": "Sharing Rule",
+      "description": "Configure and validate one criteria/owner-based sharing rule (per rule).",
+      "category": "security-and-access",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "sharing-rule",
+        "security"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1
+        },
+        {
+          "roleId": "dev",
+          "hours": 1.5
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 1
+        },
+        {
+          "roleId": "security",
+          "hours": 1
+        }
+      ]
+    },
+    {
+      "id": "sf-dynamic-forms",
+      "name": "Dynamic Forms",
+      "description": "Sections and visibility rules with regression verification (per object/record type).",
+      "category": "ux-lightning-and-productivity",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "dynamic-forms",
+        "lightning"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-lightning-app",
+      "name": "Lightning App",
+      "description": "Configure navigation, utilities, app-level settings (per app).",
+      "category": "ux-lightning-and-productivity",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "lightning-app",
+        "productivity"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-lightning-record-page",
+      "name": "Lightning Record Page",
+      "description": "Configure record page, related lists/components, and persona fit (per object/record type).",
+      "category": "ux-lightning-and-productivity",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "lightning",
+        "record-page"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 1
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-list-views-bundle-5",
+      "name": "List Views Bundle (5)",
+      "description": "Create 5 list views for one persona on one object (per bundle).",
+      "category": "ux-lightning-and-productivity",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "list-view",
+        "productivity"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 2
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    },
+    {
+      "id": "sf-quick-action",
+      "name": "Quick Action",
+      "description": "Global/object action with defaults and basic tests (per action).",
+      "category": "ux-lightning-and-productivity",
+      "techStack": "salesforce",
+      "tags": [
+        "salesforce",
+        "quick-action",
+        "productivity"
+      ],
+      "mediumEstimates": [
+        {
+          "roleId": "architect",
+          "hours": 0.5
+        },
+        {
+          "roleId": "dev",
+          "hours": 1.5
+        },
+        {
+          "roleId": "devops",
+          "hours": 0
+        },
+        {
+          "roleId": "em",
+          "hours": 0.25
+        },
+        {
+          "roleId": "qa",
+          "hours": 0.5
+        },
+        {
+          "roleId": "security",
+          "hours": 0.25
+        }
+      ]
+    }
+  ]
+}

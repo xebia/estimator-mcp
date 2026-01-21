@@ -43,8 +43,8 @@ public class TsvExporter
 
         using var writer = new StreamWriter(outputPath, false, Utf8WithBom);
 
-        // Header: fixed columns + role columns
-        var headerParts = new List<string> { "Id", "Name", "Description", "Category" };
+        // Header: fixed columns + new fields + role columns
+        var headerParts = new List<string> { "Id", "Name", "Description", "Category", "TechStack", "Tags" };
         headerParts.AddRange(roleIds);
         writer.WriteLine(string.Join("\t", headerParts));
 
@@ -56,7 +56,9 @@ public class TsvExporter
                 EscapeField(entry.Id),
                 EscapeField(entry.Name),
                 EscapeField(entry.Description),
-                EscapeField(entry.Category)
+                EscapeField(entry.Category),
+                EscapeField(entry.TechStack ?? string.Empty),
+                EscapeField(entry.Tags != null ? string.Join(";", entry.Tags) : string.Empty)  // Semicolon-separated
             };
 
             // Build a lookup of RoleId -> Hours for this entry
