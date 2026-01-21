@@ -6,7 +6,7 @@
 
 ## MCP Enhancements
 
-1. Need multiple catalogs for different business units (Allen working on)
+1. Need multiple catalogs for different business units (Allen completed)
     - Recommend Single Catalog with Category/Tags.
         - "category": "salesforce-feature",
         - "tags": ["salesforce", "apex", "backend"],
@@ -23,8 +23,22 @@
 5. Roles per techstack
     - Different roles for different techstacks (i.e. Salesforce Architect vs .NET Architect)
     - Need to know which roles apply to which techstacks
+6. Switch from json file to database to store catalog and roles
+    - Sqlite or PostgreSQL for lightweight options
+    - Consider using EF Core for data access
+
+## Deployment
+
+1. Convert to http-based MCP service model
+    - Use aspnetcore middleware to require authentication
+    - Use API key in HTTP header for authentication
+    - Host on Azure App Service
+2. Enhance catalog management web UI
+    - Require authentication
+    - Possibly merge Blazor app into MCP server project (or visa versa) so both can be deployed on the same Azure App Service
 
 ## Next steps to consider
 
 1. Add/use rate cards
 2. Roles based on location with cost considerations (i.e. offshore team member delivering on the project)
+3. Use rates/costs to generate project budget estimates
