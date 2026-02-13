@@ -8,14 +8,33 @@ public class TsvExporter
 {
     private static readonly Encoding Utf8WithBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
 
+    public void ExportTechStacks(IEnumerable<TechStack> techStacks, string outputPath)
+    {
+        var sortedTechStacks = techStacks.OrderBy(ts => ts.Id, StringComparer.Ordinal);
+
+        using var writer = new StreamWriter(outputPath, false, Utf8WithBom);
+
+        // Header
+        writer.WriteLine("Id\tName\tDescription");
+
+        // Data rows
+        foreach (var ts in sortedTechStacks)
+        {
+            writer.WriteLine(string.Join("\t",
+                EscapeField(ts.Id),
+                EscapeField(ts.Name),
+                EscapeField(ts.Description)));
+        }
+    }
+
     public void ExportRoles(IEnumerable<Role> roles, string outputPath)
     {
         var sortedRoles = roles.OrderBy(r => r.Id, StringComparer.Ordinal);
 
         using var writer = new StreamWriter(outputPath, false, Utf8WithBom);
 
-        // Header
-        writer.WriteLine("Id\tName\tDescription\tCopilotMultiplier");
+        // Header (now includes TechStackId)
+        writer.WriteLine("Id\tName\tDescription\tCopilotMultiplier\tTechStackId");
 
         // Data rows
         foreach (var role in sortedRoles)
@@ -24,14 +43,15 @@ public class TsvExporter
                 EscapeField(role.Id),
                 EscapeField(role.Name),
                 EscapeField(role.Description),
-                role.CopilotMultiplier.ToString(CultureInfo.InvariantCulture)));
+                role.CopilotMultiplier.ToString(CultureInfo.InvariantCulture),
+                EscapeField(role.TechStackId ?? string.Empty)));
         }
     }
 
     public void ExportEntries(CatalogData catalog, string outputPath)
     {
         // Get all role IDs sorted alphabetically
-        var roleIds = catalog.Roles
+        var roleIds = catalog.AllRoles
             .Select(r => r.Id)
             .OrderBy(id => id, StringComparer.Ordinal)
             .ToList();

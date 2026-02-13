@@ -6,7 +6,75 @@ namespace CatalogCli.Services;
 
 public class TsvImporter
 {
-    public List<Role> ImportRoles(string filePath, List<ValidationError> errors)
+    public List<TechStack> ImportTechStacks(string filePath, List<ValidationError> errors)
+    {
+        var techStacks = new List<TechStack>();
+        var lines = File.ReadAllLines(filePath, Encoding.UTF8);
+
+        if (lines.Length == 0)
+        {
+            errors.Add(new ValidationError("techstacks.tsv", 0, "File is empty"));
+            return techStacks;
+        }
+
+        var header = ParseTsvLine(lines[0]);
+        var expectedHeader = new[] { "Id", "Name", "Description" };
+
+        if (!ValidateHeader(header, expectedHeader, "techstacks.tsv", errors))
+            return techStacks;
+
+        var seenIds = new HashSet<string>(StringComparer.Ordinal);
+
+        for (int i = 1; i < lines.Length; i++)
+        {
+            var rowNumber = i + 1;
+            var line = lines[i];
+
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            var fields = ParseTsvLine(line);
+
+            if (fields.Length < 3)
+            {
+                errors.Add(new ValidationError("techstacks.tsv", rowNumber, $"Expected 3 columns, found {fields.Length}"));
+                continue;
+            }
+
+            var id = fields[0].Trim();
+            var name = fields[1].Trim();
+            var description = fields[2].Trim();
+
+            if (string.IsNullOrEmpty(id))
+            {
+                errors.Add(new ValidationError("techstacks.tsv", rowNumber, "Id is required"));
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(name))
+            {
+                errors.Add(new ValidationError("techstacks.tsv", rowNumber, $"Name is required for techstack '{id}'"));
+            }
+
+            if (!seenIds.Add(id))
+            {
+                errors.Add(new ValidationError("techstacks.tsv", rowNumber, $"Duplicate techstack Id '{id}'"));
+                continue;
+            }
+
+            techStacks.Add(new TechStack
+            {
+                Id = id,
+                Name = name,
+                Description = description,
+                Roles = new List<Role>()
+            });
+        }
+
+        return techStacks;
+    }
+
+    public List<Role> ImportRoles(string filePath, HashSet<string> validTechStackIds, List<ValidationError> errors)
     {
         var roles = new List<Role>();
         var lines = File.ReadAllLines(filePath, Encoding.UTF8);
@@ -18,16 +86,21 @@ public class TsvImporter
         }
 
         var header = ParseTsvLine(lines[0]);
-        var expectedHeader = new[] { "Id", "Name", "Description", "CopilotMultiplier" };
+        
+        // Support both old format (4 columns) and new format (5 columns with TechStackId)
+        var expectedHeader = header.Length >= 5
+            ? new[] { "Id", "Name", "Description", "CopilotMultiplier", "TechStackId" }
+            : new[] { "Id", "Name", "Description", "CopilotMultiplier" };
 
         if (!ValidateHeader(header, expectedHeader, "roles.tsv", errors))
             return roles;
 
+        var hasTeStackIdColumn = header.Length >= 5;
         var seenIds = new HashSet<string>(StringComparer.Ordinal);
 
         for (int i = 1; i < lines.Length; i++)
         {
-            var rowNumber = i + 1; // 1-based for user display
+            var rowNumber = i + 1;
             var line = lines[i];
 
             if (string.IsNullOrWhiteSpace(line))
@@ -37,7 +110,7 @@ public class TsvImporter
 
             if (fields.Length < 4)
             {
-                errors.Add(new ValidationError("roles.tsv", rowNumber, $"Expected 4 columns, found {fields.Length}"));
+                errors.Add(new ValidationError("roles.tsv", rowNumber, $"Expected at least 4 columns, found {fields.Length}"));
                 continue;
             }
 
@@ -45,6 +118,7 @@ public class TsvImporter
             var name = fields[1].Trim();
             var description = fields[2].Trim();
             var multiplierStr = fields[3].Trim();
+            var techStackId = hasTeStackIdColumn && fields.Length >= 5 ? fields[4].Trim() : string.Empty;
 
             // Validate required fields
             if (string.IsNullOrEmpty(id))
@@ -65,6 +139,12 @@ public class TsvImporter
                 continue;
             }
 
+            // Validate TechStackId reference
+            if (!string.IsNullOrEmpty(techStackId) && !validTechStackIds.Contains(techStackId))
+            {
+                errors.Add(new ValidationError("roles.tsv", rowNumber, $"TechStackId '{techStackId}' not found in techstacks.tsv for role '{id}'"));
+            }
+
             // Validate and parse CopilotMultiplier
             if (!decimal.TryParse(multiplierStr, NumberStyles.Number, CultureInfo.InvariantCulture, out var multiplier))
             {
@@ -77,7 +157,8 @@ public class TsvImporter
                 Id = id,
                 Name = name,
                 Description = description,
-                CopilotMultiplier = multiplier
+                CopilotMultiplier = multiplier,
+                TechStackId = string.IsNullOrEmpty(techStackId) ? null : techStackId
             });
         }
 

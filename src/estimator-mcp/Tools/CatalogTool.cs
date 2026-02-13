@@ -71,7 +71,7 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
             logger.LogInformation("[CatalogTool.GetCatalogFeatures] Loading catalog from {FilePath}", catalogFile);
 
             var json = await File.ReadAllTextAsync(catalogFile);
-            var catalogData = JsonSerializer.Deserialize<CatalogData>(json, new JsonSerializerOptions
+            var catalogData = CatalogData.DeserializeWithMigration(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
@@ -144,7 +144,7 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
         }
     }
 
-    [McpServerTool, Description("Returns a summary of all available tech stacks in the catalog with feature counts and descriptions.")]
+    [McpServerTool, Description("Returns detailed information about all available tech stacks in the catalog, including their roles, feature counts, and descriptions.")]
     public async Task<string> GetCatalogTechStacks()
     {
         try
@@ -153,7 +153,7 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
             logger.LogInformation("[CatalogTool.GetCatalogTechStacks] Loading catalog from {FilePath}", catalogFile);
 
             var json = await File.ReadAllTextAsync(catalogFile);
-            var catalogData = JsonSerializer.Deserialize<CatalogData>(json, new JsonSerializerOptions
+            var catalogData = CatalogData.DeserializeWithMigration(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
@@ -163,29 +163,46 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
                 return "Error: Failed to parse catalog data";
             }
 
-            // Group features by tech stack and count them
-            var techStackGroups = catalogData.Catalog
-                .GroupBy(f => f.TechStack ?? "unspecified")
-                .Select(g => new
+            // Build tech stack details with roles
+            var techStackDetails = catalogData.TechStacks.Select(ts =>
+            {
+                var features = catalogData.Catalog.Where(f => f.TechStack == ts.Id).ToList();
+                return new
                 {
-                    techStack = g.Key,
-                    featureCount = g.Count(),
-                    categories = g.Select(f => f.Category).Distinct().OrderBy(c => c).ToList(),
-                    sampleFeatures = g.Take(3).Select(f => new { f.Id, f.Name }).ToList()
-                })
-                .OrderByDescending(g => g.featureCount)
-                .ToList();
+                    id = ts.Id,
+                    name = ts.Name,
+                    description = ts.Description,
+                    roleCount = ts.Roles.Count,
+                    roles = ts.Roles.Select(r => new
+                    {
+                        id = r.Id,
+                        name = r.Name,
+                        description = r.Description,
+                        copilotMultiplier = r.CopilotMultiplier
+                    }).ToList(),
+                    featureCount = features.Count,
+                    categories = features.Select(f => f.Category).Distinct().OrderBy(c => c).ToList()
+                };
+            }).OrderBy(ts => ts.name).ToList();
 
             var result = new
             {
                 catalogFile = Path.GetFileName(catalogFile),
                 timestamp = catalogData.Timestamp,
-                totalTechStacks = techStackGroups.Count,
-                totalFeatures = catalogData.Catalog.Count,
-                techStacks = techStackGroups
+                version = catalogData.Version,
+                totalTechStacks = catalogData.TechStacks.Count,
+                totalGlobalRoles = catalogData.GlobalRoles.Count,
+                globalRoles = catalogData.GlobalRoles.Select(r => new
+                {
+                    id = r.Id,
+                    name = r.Name,
+                    description = r.Description,
+                    copilotMultiplier = r.CopilotMultiplier
+                }).ToList(),
+                techStacks = techStackDetails
             };
 
-            logger.LogInformation("[CatalogTool.GetCatalogTechStacks] Returned {Count} tech stacks", techStackGroups.Count);
+            logger.LogInformation("[CatalogTool.GetCatalogTechStacks] Returned {Count} tech stacks", techStackDetails.Count);
             
             return JsonSerializer.Serialize(result, new JsonSerializerOptions
             {
@@ -195,6 +212,83 @@ public sealed class CatalogTool(IConfiguration configuration, ILogger<CatalogToo
         catch (Exception ex)
         {
             logger.LogError(ex, "[CatalogTool.GetCatalogTechStacks] Error loading catalog");
+            return $"Error loading catalog: {ex.Message}";
+        }
+    }
+
+    [McpServerTool, Description("Returns all roles available for a specific tech stack, including both the tech stack's specific roles and global roles that can be used with any tech stack.")]
+    public async Task<string> GetRolesForTechStack(
+        [Description("The tech stack ID to get roles for (e.g., 'salesforce', 'dotnet', 'azure')")] string techStackId)
+    {
+        try
+        {
+            var catalogFile = GetLatestCatalogFile();
+            logger.LogInformation("[CatalogTool.GetRolesForTechStack] Loading catalog from {FilePath} for techstack {TechStackId}", catalogFile, techStackId);
+
+            var json = await File.ReadAllTextAsync(catalogFile);
+            var catalogData = CatalogData.DeserializeWithMigration(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (catalogData == null)
+            {
+                return "Error: Failed to parse catalog data";
+            }
+
+            var techStack = catalogData.TechStacks.FirstOrDefault(ts => ts.Id.Equals(techStackId, StringComparison.OrdinalIgnoreCase));
+            
+            if (techStack == null)
+            {
+                // List available tech stacks for the user
+                var availableTechStacks = catalogData.TechStacks.Select(ts => ts.Id).ToList();
+                return JsonSerializer.Serialize(new
+                {
+                    error = $"Tech stack '{techStackId}' not found",
+                    availableTechStacks = availableTechStacks
+                }, new JsonSerializerOptions { WriteIndented = true });
+            }
+
+            var availableRoles = catalogData.GetAvailableRolesForTechStack(techStackId);
+
+            var result = new
+            {
+                catalogFile = Path.GetFileName(catalogFile),
+                techStack = new
+                {
+                    id = techStack.Id,
+                    name = techStack.Name,
+                    description = techStack.Description
+                },
+                totalRoles = availableRoles.Count,
+                techStackSpecificRoles = techStack.Roles.Select(r => new
+                {
+                    id = r.Id,
+                    name = r.Name,
+                    description = r.Description,
+                    copilotMultiplier = r.CopilotMultiplier,
+                    scope = "techstack"
+                }).ToList(),
+                globalRoles = catalogData.GlobalRoles.Select(r => new
+                {
+                    id = r.Id,
+                    name = r.Name,
+                    description = r.Description,
+                    copilotMultiplier = r.CopilotMultiplier,
+                    scope = "global"
+                }).ToList()
+            };
+
+            logger.LogInformation("[CatalogTool.GetRolesForTechStack] Returned {Count} roles for {TechStackId}", availableRoles.Count, techStackId);
+            
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[CatalogTool.GetRolesForTechStack] Error loading catalog");
             return $"Error loading catalog: {ex.Message}";
         }
     }

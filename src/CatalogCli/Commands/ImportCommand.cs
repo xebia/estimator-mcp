@@ -11,6 +11,10 @@ public class ImportCommand : Command<ImportCommand.Settings>
 {
     public class Settings : CommandSettings
     {
+        [CommandOption("--techstacks <PATH>")]
+        [Description("Path to the techstacks TSV file")]
+        public string TechStacksPath { get; set; } = string.Empty;
+
         [CommandOption("--roles <PATH>")]
         [Description("Path to the roles TSV file")]
         public string RolesPath { get; set; } = string.Empty;
@@ -33,6 +37,9 @@ public class ImportCommand : Command<ImportCommand.Settings>
 
         public override ValidationResult Validate()
         {
+            if (string.IsNullOrWhiteSpace(TechStacksPath))
+                return ValidationResult.Error("TechStacks file path (--techstacks) is required");
+
             if (string.IsNullOrWhiteSpace(RolesPath))
                 return ValidationResult.Error("Roles file path (--roles) is required");
 
@@ -53,15 +60,34 @@ public class ImportCommand : Command<ImportCommand.Settings>
         var errors = new List<ValidationError>();
 
         // Check files exist
-        if (!validationService.ValidateFiles(settings.RolesPath, settings.EntriesPath, out var fileErrors))
+        if (!File.Exists(settings.TechStacksPath))
         {
-            validationService.DisplayErrors(fileErrors);
+            AnsiConsole.MarkupLine($"[red]TechStacks file not found: {Markup.Escape(settings.TechStacksPath)}[/]");
             return 1;
         }
 
-        // Import roles first
+        if (!File.Exists(settings.RolesPath))
+        {
+            AnsiConsole.MarkupLine($"[red]Roles file not found: {Markup.Escape(settings.RolesPath)}[/]");
+            return 1;
+        }
+
+        if (!File.Exists(settings.EntriesPath))
+        {
+            AnsiConsole.MarkupLine($"[red]Entries file not found: {Markup.Escape(settings.EntriesPath)}[/]");
+            return 1;
+        }
+
+        // Import techstacks first
+        AnsiConsole.MarkupLine("[dim]Reading techstacks.tsv...[/]");
+        var techStacks = importer.ImportTechStacks(settings.TechStacksPath, errors);
+
+        // Build valid techstack IDs set for role validation
+        var validTechStackIds = new HashSet<string>(techStacks.Select(ts => ts.Id), StringComparer.Ordinal);
+
+        // Import roles
         AnsiConsole.MarkupLine("[dim]Reading roles.tsv...[/]");
-        var roles = importer.ImportRoles(settings.RolesPath, errors);
+        var roles = importer.ImportRoles(settings.RolesPath, validTechStackIds, errors);
 
         // Build valid role IDs set for entry validation
         var validRoleIds = new HashSet<string>(roles.Select(r => r.Id), StringComparer.Ordinal);
@@ -77,6 +103,35 @@ public class ImportCommand : Command<ImportCommand.Settings>
             return 1;
         }
 
+        // Organize roles into techstacks and global roles
+        var globalRoles = new List<Role>();
+        var techStackRolesMap = new Dictionary<string, List<Role>>();
+
+        foreach (var role in roles)
+        {
+            if (string.IsNullOrEmpty(role.TechStackId))
+            {
+                globalRoles.Add(role);
+            }
+            else
+            {
+                if (!techStackRolesMap.ContainsKey(role.TechStackId))
+                {
+                    techStackRolesMap[role.TechStackId] = new List<Role>();
+                }
+                techStackRolesMap[role.TechStackId].Add(role);
+            }
+        }
+
+        // Assign roles to their techstacks
+        foreach (var techStack in techStacks)
+        {
+            if (techStackRolesMap.TryGetValue(techStack.Id, out var techStackRoles))
+            {
+                techStack.Roles = techStackRoles.OrderBy(r => r.Id, StringComparer.Ordinal).ToList();
+            }
+        }
+
         // Show what was parsed
         AnsiConsole.WriteLine();
         var summaryTable = new Table()
@@ -84,7 +139,10 @@ public class ImportCommand : Command<ImportCommand.Settings>
             .AddColumn("Item")
             .AddColumn(new TableColumn("Count").Centered());
 
-        summaryTable.AddRow("Roles", roles.Count.ToString());
+        summaryTable.AddRow("TechStacks", techStacks.Count.ToString());
+        summaryTable.AddRow("Roles (Total)", roles.Count.ToString());
+        summaryTable.AddRow("  - Global", globalRoles.Count.ToString());
+        summaryTable.AddRow("  - TechStack-specific", (roles.Count - globalRoles.Count).ToString());
         summaryTable.AddRow("Entries", entries.Count.ToString());
 
         AnsiConsole.Write(summaryTable);
@@ -111,9 +169,10 @@ public class ImportCommand : Command<ImportCommand.Settings>
         // Create catalog
         var catalog = new CatalogData
         {
-            Version = "1.0",
+            Version = "2.0",
             Timestamp = DateTime.UtcNow,
-            Roles = roles.OrderBy(r => r.Id, StringComparer.Ordinal).ToList(),
+            TechStacks = techStacks.OrderBy(ts => ts.Id, StringComparer.Ordinal).ToList(),
+            GlobalRoles = globalRoles.OrderBy(r => r.Id, StringComparer.Ordinal).ToList(),
             Catalog = entries
                 .OrderBy(e => e.Category, StringComparer.Ordinal)
                 .ThenBy(e => e.Id, StringComparer.Ordinal)

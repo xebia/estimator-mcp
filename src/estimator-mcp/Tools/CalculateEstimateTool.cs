@@ -89,7 +89,7 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
             logger.LogInformation("[CalculateEstimateTool.CalculateEstimate] Loading catalog from {FilePath}", catalogFile);
 
             var json = await File.ReadAllTextAsync(catalogFile);
-            var catalogData = JsonSerializer.Deserialize<CatalogData>(json, new JsonSerializerOptions
+            var catalogData = CatalogData.DeserializeWithMigration(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
@@ -101,7 +101,7 @@ public sealed class CalculateEstimateTool(IConfiguration configuration, ILogger<
 
             // Build lookup dictionaries
             var catalogLookup = catalogData.Catalog.ToDictionary(c => c.Id, StringComparer.OrdinalIgnoreCase);
-            var rolesLookup = catalogData.Roles.ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+            var rolesLookup = catalogData.AllRoles.ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
 
             // Validate all feature IDs and sizes
             var validSizes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "XS", "S", "M", "L", "XL" };
