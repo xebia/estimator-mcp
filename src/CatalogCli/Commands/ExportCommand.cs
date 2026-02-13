@@ -51,6 +51,7 @@ public class ExportCommand : Command<ExportCommand.Settings>
             AnsiConsole.MarkupLine($"[dim]Created directory: {Markup.Escape(settings.OutputDirectory)}[/]");
         }
 
+        var techStacksPath = Path.Combine(settings.OutputDirectory, "techstacks.tsv");
         var rolesPath = Path.Combine(settings.OutputDirectory, "roles.tsv");
         var entriesPath = Path.Combine(settings.OutputDirectory, "entries.tsv");
 
@@ -58,6 +59,7 @@ public class ExportCommand : Command<ExportCommand.Settings>
         if (!settings.Force)
         {
             var existingFiles = new List<string>();
+            if (File.Exists(techStacksPath)) existingFiles.Add(techStacksPath);
             if (File.Exists(rolesPath)) existingFiles.Add(rolesPath);
             if (File.Exists(entriesPath)) existingFiles.Add(entriesPath);
 
@@ -82,10 +84,11 @@ public class ExportCommand : Command<ExportCommand.Settings>
         try
         {
             var json = File.ReadAllText(settings.InputPath);
-            catalog = JsonSerializer.Deserialize<CatalogData>(json, new JsonSerializerOptions
+            var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            }) ?? throw new InvalidOperationException("Failed to deserialize catalog");
+            };
+            catalog = CatalogData.DeserializeWithMigration(json, options);
         }
         catch (Exception ex)
         {
@@ -98,7 +101,10 @@ public class ExportCommand : Command<ExportCommand.Settings>
 
         try
         {
-            exporter.ExportRoles(catalog.Roles, rolesPath);
+            exporter.ExportTechStacks(catalog.TechStacks, techStacksPath);
+            AnsiConsole.MarkupLine($"[green]Exported techstacks to: {Markup.Escape(techStacksPath)}[/]");
+
+            exporter.ExportRoles(catalog.AllRoles, rolesPath);
             AnsiConsole.MarkupLine($"[green]Exported roles to: {Markup.Escape(rolesPath)}[/]");
 
             exporter.ExportEntries(catalog, entriesPath);
@@ -111,7 +117,10 @@ public class ExportCommand : Command<ExportCommand.Settings>
                 .AddColumn("Item")
                 .AddColumn(new TableColumn("Count").Centered());
 
-            table.AddRow("Roles", catalog.Roles.Count.ToString());
+            table.AddRow("TechStacks", catalog.TechStacks.Count.ToString());
+            table.AddRow("Roles (Total)", catalog.AllRoles.Count().ToString());
+            table.AddRow("  - Global", catalog.GlobalRoles.Count.ToString());
+            table.AddRow("  - TechStack-specific", catalog.TechStacks.Sum(ts => ts.Roles.Count).ToString());
             table.AddRow("Entries", catalog.Catalog.Count.ToString());
 
             AnsiConsole.Write(table);

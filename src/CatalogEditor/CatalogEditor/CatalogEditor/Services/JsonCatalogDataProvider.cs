@@ -81,31 +81,31 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
     public async Task<List<Role>> GetRolesAsync()
     {
         var catalog = await LoadCatalogAsync();
-        return catalog.Roles;
+        return catalog.AllRoles.ToList();
     }
 
     public async Task<Role?> GetRoleAsync(string id)
     {
         var catalog = await LoadCatalogAsync();
-        return catalog.Roles.FirstOrDefault(r => r.Id == id);
+        return catalog.AllRoles.FirstOrDefault(r => r.Id == id);
     }
 
     public async Task SaveRoleAsync(Role role)
     {
         var catalog = await LoadCatalogAsync();
-        var existing = catalog.Roles.FirstOrDefault(r => r.Id == role.Id);
+        var existing = catalog.GlobalRoles.FirstOrDefault(r => r.Id == role.Id);
         if (existing != null)
         {
-            catalog.Roles.Remove(existing);
+            catalog.GlobalRoles.Remove(existing);
         }
-        catalog.Roles.Add(role);
+        catalog.GlobalRoles.Add(role);
         await SaveCatalogAsync(catalog);
     }
 
     public async Task DeleteRoleAsync(string id)
     {
         var catalog = await LoadCatalogAsync();
-        var role = catalog.Roles.FirstOrDefault(r => r.Id == id);
+        var role = catalog.GlobalRoles.FirstOrDefault(r => r.Id == id);
         if (role != null)
         {
             // Check referential integrity
@@ -119,7 +119,7 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
                 throw new ReferentialIntegrityException("Role", id, referencingEntries);
             }
 
-            catalog.Roles.Remove(role);
+            catalog.GlobalRoles.Remove(role);
             await SaveCatalogAsync(catalog);
         }
     }
@@ -142,7 +142,7 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
         var catalog = await LoadCatalogAsync();
 
         // Validate role references
-        var roleIds = catalog.Roles.Select(r => r.Id).ToHashSet();
+        var roleIds = catalog.AllRoles.Select(r => r.Id).ToHashSet();
         var invalidRoleIds = entry.MediumEstimates
             .Select(m => m.RoleId)
             .Where(id => !roleIds.Contains(id))
@@ -192,7 +192,7 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
     public async Task<List<string>> ValidateRoleReferencesAsync(CatalogEntry entry)
     {
         var catalog = await LoadCatalogAsync();
-        var roleIds = catalog.Roles.Select(r => r.Id).ToHashSet();
+        var roleIds = catalog.AllRoles.Select(r => r.Id).ToHashSet();
         return entry.MediumEstimates
             .Select(m => m.RoleId)
             .Where(id => !roleIds.Contains(id))
