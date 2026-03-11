@@ -14,6 +14,15 @@ public class AzureEmailService(IOptions<AzureEmailOptions> options, ILogger<Azur
 {
     public async Task SendVerificationCodeAsync(string email, string code)
     {
+        if (string.IsNullOrEmpty(options.Value.ConnectionString))
+        {
+            // ACS not configured — log the code so it can be retrieved from container logs
+            logger.LogWarning(
+                "ACS email not configured. Verification code for {Email}: {Code}",
+                email, code);
+            return;
+        }
+
         var client = new EmailClient(options.Value.ConnectionString);
 
         var message = new EmailMessage(
