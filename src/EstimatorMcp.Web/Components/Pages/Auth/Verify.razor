@@ -1,0 +1,73 @@
+@page "/auth/verify"
+@rendermode InteractiveServer
+@inject IVerificationService VerificationService
+@inject ITokenService TokenService
+@inject TokenDisplayService TokenDisplay
+@inject NavigationManager Nav
+@using EstimatorMcp.Web.Services.Auth
+
+<PageTitle>Verify – Estimator MCP</PageTitle>
+
+<h1>Enter verification code</h1>
+<p>We sent a 6-digit code to <strong>@Email</strong>. It expires in 15 minutes.</p>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+<EditForm Model="_model" OnValidSubmit="OnSubmitAsync" FormName="verify">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label class="form-label">Verification code</label>
+        <InputText @bind-Value="_model.Code" class="form-control" placeholder="123456" inputmode="numeric" maxlength="6" autocomplete="one-time-code" />
+        <ValidationMessage For="() => _model.Code" />
+    </div>
+    <button type="submit" class="btn btn-primary" disabled="@_submitting">
+        @(_submitting ? "Verifying…" : "Verify")
+    </button>
+    <a href="/auth/register" class="btn btn-link ms-2">Resend code</a>
+</EditForm>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Email { get; set; } = string.Empty;
+
+    private readonly VerifyModel _model = new();
+    private string? _error;
+    private bool _submitting;
+
+    private async Task OnSubmitAsync()
+    {
+        _error = null;
+        _submitting = true;
+
+        var email = Email.Trim().ToLowerInvariant();
+        var code = _model.Code.Trim();
+
+        try
+        {
+            var valid = await VerificationService.ValidateCodeAsync(email, code);
+            if (!valid)
+            {
+                _error = "Invalid or expired code. Please try again.";
+                _submitting = false;
+                return;
+            }
+
+            var rawToken = await TokenService.CreateTokenAsync(email, label: null);
+            var displayId = TokenDisplay.Store(rawToken, email);
+            Nav.NavigateTo($"/auth/token?id={displayId}");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Verification failed: {ex.Message}";
+            _submitting = false;
+        }
+    }
+
+    private sealed class VerifyModel
+    {
+        public string Code { get; set; } = string.Empty;
+    }
+}

@@ -1,7 +1,10 @@
+using EstimatorMcp.Web.Auth;
 using EstimatorMcp.Web.Components;
 using EstimatorMcp.Web.Data;
 using EstimatorMcp.Web.Services;
+using EstimatorMcp.Web.Services.Auth;
 using EstimatorMcp.Web.Tools;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -37,6 +40,18 @@ try
     // Catalog provider (scoped to match DbContext lifetime)
     builder.Services.AddScoped<ICatalogDataProvider, DbCatalogDataProvider>();
 
+    // Auth services
+    builder.Services.Configure<AzureEmailOptions>(builder.Configuration.GetSection("AzureEmailService"));
+    builder.Services.AddScoped<IEmailService, AzureEmailService>();
+    builder.Services.AddScoped<IVerificationService, VerificationService>();
+    builder.Services.AddScoped<ITokenService, TokenService>();
+    builder.Services.AddSingleton<TokenDisplayService>();
+
+    // Bearer token authentication for MCP endpoint
+    builder.Services.AddAuthentication(BearerTokenAuthHandler.SchemeName)
+        .AddScheme<AuthenticationSchemeOptions, BearerTokenAuthHandler>(BearerTokenAuthHandler.SchemeName, null);
+    builder.Services.AddAuthorization();
+
     // Blazor
     builder.Services.AddRazorComponents()
         .AddInteractiveServerComponents();
@@ -71,10 +86,12 @@ try
     app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
     app.UseHttpsRedirection();
     app.UseStaticFiles();
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.UseAntiforgery();
 
-    // MCP endpoint (HTTP/Streamable)
-    app.MapMcp("/mcp");
+    // MCP endpoint (HTTP/Streamable) — requires Bearer token
+    app.MapMcp("/mcp").RequireAuthorization();
 
     // Blazor
     app.MapRazorComponents<App>()

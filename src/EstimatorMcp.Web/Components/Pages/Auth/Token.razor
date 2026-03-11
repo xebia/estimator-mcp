@@ -1,0 +1,50 @@
+@page "/auth/token"
+@rendermode InteractiveServer
+@inject TokenDisplayService TokenDisplay
+@inject NavigationManager Nav
+@using EstimatorMcp.Web.Services.Auth
+
+<PageTitle>Your API Token – Estimator MCP</PageTitle>
+
+@if (_loaded && _rawToken is not null)
+{
+    <h1>Your API Token</h1>
+    <div class="alert alert-warning">
+        <strong>Save this token now.</strong> It will not be shown again.
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Token</label>
+        <div class="input-group">
+            <input type="text" class="form-control font-monospace" readonly value="@_rawToken" id="token-value" />
+            <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('token-value').value)">Copy</button>
+        </div>
+    </div>
+    <p>Use this token as a Bearer token in the <code>Authorization</code> header when calling the MCP endpoint:</p>
+    <pre><code>Authorization: Bearer @_rawToken</code></pre>
+    <a href="/auth/tokens?email=@Uri.EscapeDataString(_email ?? string.Empty)" class="btn btn-primary">Manage tokens</a>
+}
+else if (_loaded)
+{
+    <h1>Token not found</h1>
+    <p>This link has expired or was already used. <a href="/auth/register">Register again</a> to generate a new token.</p>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; } = string.Empty;
+
+    private string? _rawToken;
+    private string? _email;
+    private bool _loaded;
+
+    protected override void OnInitialized()
+    {
+        if (Guid.TryParse(Id, out var id))
+        {
+            var result = TokenDisplay.Consume(id);
+            _rawToken = result?.RawToken;
+            _email = result?.Email;
+        }
+        _loaded = true;
+    }
+}

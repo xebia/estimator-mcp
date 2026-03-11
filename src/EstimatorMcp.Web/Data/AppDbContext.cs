@@ -9,6 +9,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CatalogEntryEntity> CatalogEntries => Set<CatalogEntryEntity>();
     public DbSet<EntryEstimateEntity> EntryEstimates => Set<EntryEstimateEntity>();
     public DbSet<CatalogVersionEntity> CatalogVersions => Set<CatalogVersionEntity>();
+    public DbSet<UserEntity> Users => Set<UserEntity>();
+    public DbSet<ApiTokenEntity> ApiTokens => Set<ApiTokenEntity>();
+    public DbSet<PendingVerificationEntity> PendingVerifications => Set<PendingVerificationEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,5 +43,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany(r => r.Estimates)
             .HasForeignKey(e => e.RoleId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserEntity>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<ApiTokenEntity>()
+            .HasOne(t => t.User)
+            .WithMany(u => u.ApiTokens)
+            .HasForeignKey(t => t.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -1,0 +1,64 @@
+@page "/auth/register"
+@rendermode InteractiveServer
+@inject IVerificationService VerificationService
+@inject IEmailService EmailService
+@inject NavigationManager Nav
+@using EstimatorMcp.Web.Services.Auth
+
+<PageTitle>Register – Estimator MCP</PageTitle>
+
+<h1>Get API Access</h1>
+<p>Enter your <strong>@@xebia.com</strong> email to receive a verification code.</p>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+<EditForm Model="_model" OnValidSubmit="OnSubmitAsync" FormName="register">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label class="form-label">Email address</label>
+        <InputText @bind-Value="_model.Email" class="form-control" placeholder="you@xebia.com" autocomplete="email" />
+        <ValidationMessage For="() => _model.Email" />
+    </div>
+    <button type="submit" class="btn btn-primary" disabled="@_submitting">
+        @(_submitting ? "Sending…" : "Send verification code")
+    </button>
+</EditForm>
+
+@code {
+    private readonly RegisterModel _model = new();
+    private string? _error;
+    private bool _submitting;
+
+    private async Task OnSubmitAsync()
+    {
+        _error = null;
+        var email = _model.Email.Trim().ToLowerInvariant();
+
+        if (!email.EndsWith("@xebia.com", StringComparison.OrdinalIgnoreCase))
+        {
+            _error = "Only @xebia.com email addresses are allowed.";
+            return;
+        }
+
+        _submitting = true;
+        try
+        {
+            var code = await VerificationService.CreateVerificationAsync(email);
+            await EmailService.SendVerificationCodeAsync(email, code);
+            Nav.NavigateTo($"/auth/verify?email={Uri.EscapeDataString(email)}");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to send verification email: {ex.Message}";
+            _submitting = false;
+        }
+    }
+
+    private sealed class RegisterModel
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+}

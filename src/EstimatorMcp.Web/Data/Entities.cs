@@ -47,3 +47,30 @@ public class CatalogVersionEntity
     public DateTime CreatedAt { get; set; }
     public string SnapshotJson { get; set; } = string.Empty;
 }
+
+public class UserEntity
+{
+    public int Id { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public List<ApiTokenEntity> ApiTokens { get; set; } = [];
+}
+
+public class ApiTokenEntity
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public string TokenHash { get; set; } = string.Empty;
+    public string? Label { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LastUsedAt { get; set; }
+    public UserEntity User { get; set; } = null!;
+}
+
+public class PendingVerificationEntity
+{
+    public int Id { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string CodeHash { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+}

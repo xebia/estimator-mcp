@@ -1,0 +1,110 @@
+@page "/auth/tokens"
+@rendermode InteractiveServer
+@inject ITokenService TokenService
+@inject NavigationManager Nav
+@using EstimatorMcp.Web.Services.Auth
+
+<PageTitle>API Tokens – Estimator MCP</PageTitle>
+
+<h1>API Tokens</h1>
+
+@if (!_loaded)
+{
+    <div class="mb-3">
+        <label class="form-label">Your @@xebia.com email</label>
+        <div class="input-group" style="max-width: 400px">
+            <input type="email" class="form-control" @bind="_emailInput" placeholder="you@xebia.com" />
+            <button class="btn btn-primary" @onclick="LoadTokensAsync">Load</button>
+        </div>
+    </div>
+}
+else
+{
+    <p>Showing tokens for <strong>@_email</strong>. <button class="btn btn-link p-0" @onclick="Reset">Switch email</button></p>
+
+    @if (_tokens.Count == 0)
+    {
+        <p class="text-muted">No tokens found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Label</th>
+                    <th>Created</th>
+                    <th>Last used</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var token in _tokens)
+                {
+                    <tr>
+                        <td>@(token.Label ?? "(no label)")</td>
+                        <td>@token.CreatedAt.ToLocalTime().ToString("g")</td>
+                        <td>@(token.LastUsedAt.HasValue ? token.LastUsedAt.Value.ToLocalTime().ToString("g") : "Never")</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" @onclick="() => RevokeAsync(token.Id)">Revoke</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <a href="/auth/register" class="btn btn-outline-primary">Generate new token</a>
+}
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger mt-3">@_error</div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Email { get; set; } = string.Empty;
+
+    private string _emailInput = string.Empty;
+    private string? _email;
+    private List<ApiTokenInfo> _tokens = [];
+    private bool _loaded;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(Email))
+        {
+            _emailInput = Email;
+            await LoadTokensAsync();
+        }
+    }
+
+    private async Task LoadTokensAsync()
+    {
+        _error = null;
+        var email = _emailInput.Trim().ToLowerInvariant();
+        if (string.IsNullOrEmpty(email))
+        {
+            _error = "Please enter an email address.";
+            return;
+        }
+        _email = email;
+        _tokens = await TokenService.GetTokensForEmailAsync(email);
+        _loaded = true;
+    }
+
+    private async Task RevokeAsync(int tokenId)
+    {
+        await TokenService.RevokeTokenAsync(tokenId);
+        _tokens = await TokenService.GetTokensForEmailAsync(_email!);
+    }
+
+    private void Reset()
+    {
+        _loaded = false;
+        _tokens = [];
+        _email = null;
+        _emailInput = string.Empty;
+    }
+}
