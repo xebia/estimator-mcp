@@ -1,0 +1,121 @@
+@page "/roles/new"
+@page "/roles/edit/{id}"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "Create New Role" : $"Edit Role: {role.Name}")</PageTitle>
+
+<h1>@(IsNew ? "Create New Role" : "Edit Role")</h1>
+
+@if (role == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="role" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="id" class="form-label">ID</label>
+            <InputText id="id" class="form-control" @bind-Value="role.Id" disabled="@(!IsNew)" />
+            <div class="form-text">Unique identifier (lowercase, no spaces). Cannot be changed after creation.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="role.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="role.Description" rows="3" />
+        </div>
+
+        <div class="mb-3">
+            <label for="techStack" class="form-label">Tech Stack</label>
+            <InputSelect id="techStack" class="form-control" @bind-Value="role.TechStackId" disabled="@(!IsNew)">
+                <option value="">-- Global (shared across all tech stacks) --</option>
+                @foreach (var ts in techStacks ?? [])
+                {
+                    <option value="@ts.Id">@ts.Name</option>
+                }
+            </InputSelect>
+            <div class="form-text">Leave blank for a global role available to all tech stacks. Cannot be changed after creation.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="copilotMultiplier" class="form-label">Copilot Multiplier</label>
+            <InputNumber id="copilotMultiplier" class="form-control" @bind-Value="role.CopilotMultiplier" step="0.01" />
+            <div class="form-text">Productivity multiplier (e.g., 0.70 = 30% faster with Copilot, 1.0 = no AI acceleration).</div>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? TechStackId { get; set; }
+
+    private Role role = new();
+    private List<TechStack>? techStacks;
+    private bool IsNew => string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        techStacks = await DataProvider.GetTechStacksAsync();
+
+        if (!IsNew && Id != null)
+        {
+            var existing = await DataProvider.GetRoleAsync(Id);
+            if (existing != null)
+            {
+                role = existing;
+            }
+            else
+            {
+                Navigation.NavigateTo("/roles");
+            }
+        }
+        else
+        {
+            role = new Role { CopilotMultiplier = 1.0m, TechStackId = TechStackId };
+        }
+    }
+
+    private async Task Save()
+    {
+        await DataProvider.SaveRoleAsync(role);
+        // If we came from a techstack page, go back there
+        if (!string.IsNullOrEmpty(role.TechStackId))
+        {
+            Navigation.NavigateTo($"/techstacks/edit/{role.TechStackId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/roles");
+        }
+    }
+
+    private void Cancel()
+    {
+        if (!string.IsNullOrEmpty(TechStackId))
+        {
+            Navigation.NavigateTo($"/techstacks/edit/{TechStackId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/roles");
+        }
+    }
+}

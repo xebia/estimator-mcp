@@ -1,0 +1,207 @@
+@page "/catalog/new"
+@page "/catalog/edit/{id}"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "Create New Catalog Entry" : $"Edit Catalog Entry: {entry.Name}")</PageTitle>
+
+<h1>@(IsNew ? "Create New Catalog Entry" : "Edit Catalog Entry")</h1>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+
+@if (entry == null || allRoles == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="entry" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="id" class="form-label">ID</label>
+            <InputText id="id" class="form-control" @bind-Value="entry.Id" disabled="@(!IsNew)" />
+            <div class="form-text">Unique identifier (lowercase, hyphens allowed). Cannot be changed after creation.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="entry.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="entry.Description" rows="3" />
+        </div>
+
+        <div class="mb-3">
+            <label for="category" class="form-label">Category</label>
+            <InputText id="category" class="form-control" @bind-Value="entry.Category" />
+            <div class="form-text">Optional grouping (e.g., "feature", "integration", "devops", "data", "qa").</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="techStack" class="form-label">Tech Stack</label>
+            <InputSelect id="techStack" class="form-control" @bind-Value="entry.TechStack">
+                <option value="">-- Any/Shared --</option>
+                @foreach (var ts in techStacks ?? [])
+                {
+                    <option value="@ts.Id">@ts.Name</option>
+                }
+            </InputSelect>
+            <div class="form-text">Technology platform for this feature. Role estimates will be filtered to this tech stack's roles plus global roles.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="tags" class="form-label">Tags</label>
+            <InputText id="tags" class="form-control" @bind-Value="tagsString" placeholder="frontend, api, authentication" />
+            <div class="form-text">Comma-separated tags for flexible categorization (e.g., "apex, backend, integration").</div>
+        </div>
+
+        <h3>Medium (M) Estimates by Role</h3>
+        <p class="text-muted">Enter baseline hours for Medium size. Other sizes (XS, S, L, XL) are calculated using Fibonacci scaling.</p>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Hours (Medium)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var estimate in entry.MediumEstimates)
+                {
+                    <tr>
+                        <td>
+                            <InputSelect class="form-control" @bind-Value="estimate.RoleId">
+                                <option value="">-- Select role --</option>
+                                @foreach (var role in AvailableRoles)
+                                {
+                                    <option value="@role.Id">@role.Name (@role.Id)</option>
+                                }
+                            </InputSelect>
+                        </td>
+                        <td>
+                            <InputNumber class="form-control" @bind-Value="estimate.Hours" step="0.5" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemoveEstimate(estimate)">Remove</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mb-3">
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="AddEstimate">
+                <i class="bi bi-plus-circle"></i> Add Role Estimate
+            </button>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private CatalogEntry entry = new();
+    private List<TechStack>? techStacks;
+    private List<Role>? allRoles;
+    private string? errorMessage;
+    private bool IsNew => string.IsNullOrEmpty(Id);
+
+    // Roles available for the currently selected tech stack: global + techstack-specific
+    private List<Role> AvailableRoles =>
+        allRoles?.Where(r => string.IsNullOrEmpty(r.TechStackId) || r.TechStackId == entry.TechStack).ToList() ?? [];
+
+    // Helper property to bind tags as a comma-separated string
+    private string tagsString
+    {
+        get => entry.Tags != null ? string.Join(", ", entry.Tags) : string.Empty;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                entry.Tags = null;
+            }
+            else
+            {
+                entry.Tags = value.Split(',')
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList();
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        allRoles = await DataProvider.GetRolesAsync();
+        techStacks = await DataProvider.GetTechStacksAsync();
+
+        if (!IsNew && Id != null)
+        {
+            var existing = await DataProvider.GetCatalogEntryAsync(Id);
+            if (existing != null)
+            {
+                entry = existing;
+            }
+            else
+            {
+                Navigation.NavigateTo("/catalog");
+            }
+        }
+        else
+        {
+            entry = new CatalogEntry();
+        }
+    }
+
+    private void AddEstimate()
+    {
+        entry.MediumEstimates.Add(new MediumEstimate());
+    }
+
+    private void RemoveEstimate(MediumEstimate estimate)
+    {
+        entry.MediumEstimates.Remove(estimate);
+    }
+
+    private async Task Save()
+    {
+        ClearError();
+        try
+        {
+            await DataProvider.SaveCatalogEntryAsync(entry);
+            Navigation.NavigateTo("/catalog");
+        }
+        catch (InvalidRoleReferenceException ex)
+        {
+            errorMessage = $"Cannot save: Invalid role references: {string.Join(", ", ex.InvalidRoleIds)}";
+        }
+    }
+
+    private void ClearError()
+    {
+        errorMessage = null;
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/catalog");
+    }
+}

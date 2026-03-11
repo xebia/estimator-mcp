@@ -1,0 +1,110 @@
+@page "/techstacks"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Tech Stacks</PageTitle>
+
+<h1>Tech Stacks</h1>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="CreateNew">
+        <i class="bi bi-plus-circle"></i> Create New Tech Stack
+    </button>
+</div>
+
+@if (techStacks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!techStacks.Any())
+{
+    <p><em>No tech stacks found. Click "Create New Tech Stack" to add one.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Roles</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ts in techStacks)
+            {
+                <tr>
+                    <td>@ts.Id</td>
+                    <td>@ts.Name</td>
+                    <td>@ts.Description</td>
+                    <td>@ts.Roles.Count</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(ts.Id)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(ts.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TechStack>? techStacks;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTechStacks();
+    }
+
+    private async Task LoadTechStacks()
+    {
+        techStacks = await DataProvider.GetTechStacksAsync();
+    }
+
+    private void CreateNew()
+    {
+        Navigation.NavigateTo("/techstacks/new");
+    }
+
+    private void Edit(string id)
+    {
+        Navigation.NavigateTo($"/techstacks/edit/{id}");
+    }
+
+    private async Task Delete(string id)
+    {
+        ClearError();
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete tech stack '{id}'? Its roles will also be deleted."))
+        {
+            try
+            {
+                await DataProvider.DeleteTechStackAsync(id);
+                await LoadTechStacks();
+            }
+            catch (ReferentialIntegrityException ex)
+            {
+                errorMessage = $"Cannot delete tech stack '{id}' because it is referenced by: {string.Join(", ", ex.ReferencingEntities)}";
+            }
+        }
+    }
+
+    private void ClearError()
+    {
+        errorMessage = null;
+    }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+}
