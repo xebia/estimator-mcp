@@ -1,20 +1,14 @@
 using System.ComponentModel;
-using System.Text.Json;
 using CatalogCli.Services;
-using EstimatorMcp.Models;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace CatalogCli.Commands;
 
-public class ExportCommand : Command<ExportCommand.Settings>
+public class ExportCommand : AsyncCommand<ExportCommand.Settings>
 {
     public class Settings : CommandSettings
     {
-        [CommandOption("-i|--input <PATH>")]
-        [Description("Path to the input catalog JSON file")]
-        public string InputPath { get; set; } = string.Empty;
-
         [CommandOption("-o|--output <DIRECTORY>")]
         [Description("Output directory for TSV files")]
         public string OutputDirectory { get; set; } = string.Empty;
@@ -23,11 +17,16 @@ public class ExportCommand : Command<ExportCommand.Settings>
         [Description("Overwrite existing files without prompting")]
         public bool Force { get; set; }
 
+        [CommandOption("--server <URL>")]
+        [Description("API server URL (overrides config and ESTIMATOR_API_URL)")]
+        public string? Server { get; set; }
+
+        [CommandOption("--token <TOKEN>")]
+        [Description("Bearer token (overrides config and ESTIMATOR_API_TOKEN)")]
+        public string? Token { get; set; }
+
         public override ValidationResult Validate()
         {
-            if (string.IsNullOrWhiteSpace(InputPath))
-                return ValidationResult.Error("Input path (-i) is required");
-
             if (string.IsNullOrWhiteSpace(OutputDirectory))
                 return ValidationResult.Error("Output directory (-o) is required");
 
@@ -35,12 +34,21 @@ public class ExportCommand : Command<ExportCommand.Settings>
         }
     }
 
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        // Validate input file exists
-        if (!File.Exists(settings.InputPath))
+        var (serverUrl, token) = CliConfig.Resolve(settings.Server, settings.Token);
+
+        if (string.IsNullOrEmpty(serverUrl))
         {
-            AnsiConsole.MarkupLine($"[red]Error: Input file not found: {Markup.Escape(settings.InputPath)}[/]");
+            AnsiConsole.MarkupLine("[red]Server URL is not configured.[/]");
+            AnsiConsole.MarkupLine("[dim]Run: catalogcli configure --server <URL> --token <TOKEN>[/]");
+            return 1;
+        }
+
+        if (string.IsNullOrEmpty(token))
+        {
+            AnsiConsole.MarkupLine("[red]API token is not configured.[/]");
+            AnsiConsole.MarkupLine("[dim]Run: catalogcli configure --server <URL> --token <TOKEN>[/]");
             return 1;
         }
 
@@ -67,9 +75,7 @@ public class ExportCommand : Command<ExportCommand.Settings>
             {
                 AnsiConsole.MarkupLine("[yellow]The following files already exist:[/]");
                 foreach (var file in existingFiles)
-                {
                     AnsiConsole.MarkupLine($"  - {Markup.Escape(file)}");
-                }
 
                 if (!AnsiConsole.Confirm("Overwrite existing files?", false))
                 {
@@ -79,58 +85,49 @@ public class ExportCommand : Command<ExportCommand.Settings>
             }
         }
 
-        // Load catalog JSON
-        CatalogData catalog;
-        try
-        {
-            var json = File.ReadAllText(settings.InputPath);
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            catalog = CatalogData.DeserializeWithMigration(json, options);
-        }
-        catch (Exception ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Error reading catalog JSON: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-
-        // Export to TSV
-        var exporter = new TsvExporter();
+        using var client = new ApiClient(serverUrl, token);
 
         try
         {
-            exporter.ExportTechStacks(catalog.TechStacks, techStacksPath);
+            AnsiConsole.MarkupLine($"[dim]Connecting to {Markup.Escape(serverUrl)}...[/]");
+
+            var techStacksTsv = await client.GetTsvAsync("api/catalog/export/tsv/techstacks");
+            File.WriteAllText(techStacksPath, techStacksTsv);
             AnsiConsole.MarkupLine($"[green]Exported techstacks to: {Markup.Escape(techStacksPath)}[/]");
 
-            exporter.ExportRoles(catalog.AllRoles, rolesPath);
+            var rolesTsv = await client.GetTsvAsync("api/catalog/export/tsv/roles");
+            File.WriteAllText(rolesPath, rolesTsv);
             AnsiConsole.MarkupLine($"[green]Exported roles to: {Markup.Escape(rolesPath)}[/]");
 
-            exporter.ExportEntries(catalog, entriesPath);
+            var entriesTsv = await client.GetTsvAsync("api/catalog/export/tsv/entries");
+            File.WriteAllText(entriesPath, entriesTsv);
             AnsiConsole.MarkupLine($"[green]Exported entries to: {Markup.Escape(entriesPath)}[/]");
 
-            // Summary
+            // Count lines (excluding header) for summary
+            var techStackCount = CountDataRows(techStacksTsv);
+            var roleCount = CountDataRows(rolesTsv);
+            var entryCount = CountDataRows(entriesTsv);
+
             AnsiConsole.WriteLine();
-            var table = new Table()
+            var table = new Spectre.Console.Table()
                 .Border(TableBorder.Rounded)
                 .AddColumn("Item")
                 .AddColumn(new TableColumn("Count").Centered());
 
-            table.AddRow("TechStacks", catalog.TechStacks.Count.ToString());
-            table.AddRow("Roles (Total)", catalog.AllRoles.Count().ToString());
-            table.AddRow("  - Global", catalog.GlobalRoles.Count.ToString());
-            table.AddRow("  - TechStack-specific", catalog.TechStacks.Sum(ts => ts.Roles.Count).ToString());
-            table.AddRow("Entries", catalog.Catalog.Count.ToString());
-
+            table.AddRow("TechStacks", techStackCount.ToString());
+            table.AddRow("Roles", roleCount.ToString());
+            table.AddRow("Entries", entryCount.ToString());
             AnsiConsole.Write(table);
 
             return 0;
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error exporting: {Markup.Escape(ex.Message)}[/]");
+            AnsiConsole.MarkupLine($"[red]Error: {Markup.Escape(ex.Message)}[/]");
             return 1;
         }
     }
+
+    private static int CountDataRows(string tsv) =>
+        tsv.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length - 1; // subtract header
 }
