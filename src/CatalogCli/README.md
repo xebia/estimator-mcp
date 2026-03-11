@@ -29,33 +29,62 @@ dotnet build
 
 ## File Format Specification
 
-### 1. roles.tsv
+### 1. techstacks.tsv
 
-Tab-separated file defining team roles and AI productivity multipliers.
+Tab-separated file defining technology platforms.
 
 **Format:**
 ```
-Id	Name	Description	CopilotMultiplier
+Id	Name	Description
 ```
 
 **Columns:**
 | Column | Type | Required | Description | Example |
 |--------|------|----------|-------------|---------|
-| `Id` | String | ? Yes | Unique role identifier (lowercase, no spaces) | `dev` |
-| `Name` | String | ? Yes | Display name | `Developer` |
-| `Description` | String | ?? Optional | Role description | `Full-stack developer with modern tooling` |
-| `CopilotMultiplier` | Decimal | ? Yes | AI productivity multiplier (0.0-1.0, where 0.6 = 40% faster) | `0.6` |
+| `Id` | String | ✅ Yes | Unique identifier (lowercase, hyphens allowed) | `salesforce` |
+| `Name` | String | ✅ Yes | Display name | `Salesforce` |
+| `Description` | String | ➖ Optional | Platform description | `Salesforce CRM platform` |
 
 **Example:**
 ```tsv
-Id	Name	Description	CopilotMultiplier
-architect	Solution Architect	Technical architecture and system design	0.8
-dev	Developer	Full-stack developer with modern tooling	0.6
-devops	DevOps engineer	Infrastructure and deployment automation	0.7
-em	Engagement manager	Manages client relationships	1.0
+Id	Name	Description
+aws	AWS	Amazon Web Services cloud platform
+azure	Azure	Microsoft Azure cloud platform
+dotnet	.NET	.NET / ASP.NET Core applications
+python	Python	Python backend services
+salesforce	Salesforce	Salesforce CRM platform
+```
+
+---
+
+### 2. roles.tsv
+
+Tab-separated file defining team roles and AI productivity multipliers.
+
+**Format:**
+```
+Id	Name	Description	CopilotMultiplier	TechStackId
+```
+
+**Columns:**
+| Column | Type | Required | Description | Example |
+|--------|------|----------|-------------|---------|
+| `Id` | String | ✅ Yes | Unique role identifier (lowercase, no spaces) | `sf-dev` |
+| `Name` | String | ✅ Yes | Display name | `Salesforce Developer` |
+| `Description` | String | ➖ Optional | Role description | `Apex, LWC, Flows development` |
+| `CopilotMultiplier` | Decimal | ✅ Yes | AI productivity multiplier (0.0–1.0, where 0.7 = 30% faster) | `0.7` |
+| `TechStackId` | String | ➖ Optional | Owning tech stack ID; empty = global role | `salesforce` |
+
+> **Global vs techstack roles:** Leave `TechStackId` empty for roles shared across all tech stacks (e.g., Engagement Manager, QA). Set `TechStackId` for roles specific to a platform.
+
+**Example:**
+```tsv
+Id	Name	Description	CopilotMultiplier	TechStackId
+em	Engagement Manager	Manages client relationships	1.0
 qa	QA Engineer	Quality assurance and test automation	0.65
-security	Security Engineer	Security assessment and implementation	0.85
-ux	UX Designer	User experience and interface design	0.9
+sf-dev	Salesforce Developer	Apex, LWC, Flows development	0.7	salesforce
+sf-admin	Salesforce Admin	Configuration and user management	0.85	salesforce
+dotnet-dev	.NET Developer	C#, ASP.NET Core, Blazor development	0.55	dotnet
 ```
 
 ---
@@ -112,7 +141,8 @@ dotnet run -- export \
 ```
 
 **Output:**
-- `./tsv-export/roles.tsv` - Team roles
+- `./tsv-export/techstacks.tsv` - Tech stack definitions
+- `./tsv-export/roles.tsv` - Team roles (global and techstack-specific)
 - `./tsv-export/entries.tsv` - Catalog features
 
 ---
@@ -140,12 +170,13 @@ dotnet run -- export \
 Import edited TSV files to create a new catalog JSON:
 
 ```bash
-dotnet run -- import --roles <roles.tsv> --entries <entries.tsv> -o <output.json>
+dotnet run -- import --techstacks <techstacks.tsv> --roles <roles.tsv> --entries <entries.tsv> -o <output.json>
 ```
 
 **Example:**
 ```bash
 dotnet run -- import \
+  --techstacks "./tsv-export/techstacks.tsv" \
   --roles "./tsv-export/roles.tsv" \
   --entries "./tsv-export/entries.tsv" \
   -o "./updated-catalog.json"
@@ -223,7 +254,7 @@ This script:
 ### Step 3: Import to JSON
 
 ```bash
-dotnet run -- import --roles "output/roles.tsv" --entries "output/entries.tsv" -o "catalog.json"
+dotnet run -- import --techstacks "output/techstacks.tsv" --roles "output/roles.tsv" --entries "output/entries.tsv" -o "catalog.json"
 ```
 
 ---
@@ -248,6 +279,7 @@ dotnet run -- export \
 **Step 3: Import back**
 ```bash
 dotnet run -- import \
+  --techstacks "./export/techstacks.tsv" \
   --roles "./export/roles.tsv" \
   --entries "./export/entries.tsv" \
   -o "./updated-catalog.json"
@@ -384,22 +416,43 @@ roles.tsv:5 - Invalid CopilotMultiplier 'abc' for role 'dev'
 
 ### Export
 ```bash
-dotnet run -- export -i <input-json> -o <output-dir>
+dotnet run -- export -i <input-json> -o <output-dir> [-f]
 ```
 
 **Options:**
 - `-i, --input` - Path to input catalog JSON file (required)
 - `-o, --output` - Output directory for TSV files (required)
+- `-f, --force` - Overwrite existing files without prompting
 
 ### Import
 ```bash
-dotnet run -- import --roles <roles-tsv> --entries <entries-tsv> -o <output-json>
+dotnet run -- import --techstacks <techstacks-tsv> --roles <roles-tsv> --entries <entries-tsv> -o <output-json> [--validate-only] [-f]
 ```
 
 **Options:**
+- `--techstacks` - Path to techstacks.tsv file (required)
 - `--roles` - Path to roles.tsv file (required)
 - `--entries` - Path to entries.tsv file (required)
 - `-o, --output` - Path for output catalog JSON file (required)
+- `--validate-only` - Validate files without writing output
+- `-f, --force` - Overwrite existing output file without prompting
+
+### Migrate
+```bash
+dotnet run -- migrate -i <input-json> -o <output-json> [-f]
+```
+
+Converts a v1.0 catalog (flat `roles` array) to v2.0 format (`globalRoles` + `techStacks` with nested roles). Safe to run on already-migrated catalogs — re-writes in canonical v2.0 format.
+
+**Options:**
+- `-i, --input` - Path to input catalog JSON file, v1.0 or v2.0 (required)
+- `-o, --output` - Path for migrated output JSON file (required)
+- `-f, --force` - Overwrite existing output file without prompting
+
+**Example:**
+```bash
+dotnet run -- migrate -i old-catalog-v1.json -o catalog-migrated.json
+```
 
 ---
 

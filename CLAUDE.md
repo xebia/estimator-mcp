@@ -30,6 +30,20 @@ dotnet run
 dotnet run --urls="https://localhost:5002"
 ```
 
+### Catalog CLI (bulk import/export/migrate)
+```bash
+cd src/CatalogCli
+
+# Export catalog JSON to TSV files for Excel editing
+dotnet run -- export -i <catalog.json> -o ./export/
+
+# Import TSV files back to catalog JSON
+dotnet run -- import --techstacks ./export/techstacks.tsv --roles ./export/roles.tsv --entries ./export/entries.tsv -o updated.json
+
+# Migrate a v1.0 catalog to v2.0 format
+dotnet run -- migrate -i catalog-v1.json -o catalog-v2.json
+```
+
 ## Architecture
 
 ### Project Structure

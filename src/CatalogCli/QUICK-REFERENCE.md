@@ -11,7 +11,12 @@ Opens `export/entries.tsv` in Excel ? Edit ? Save as Tab Delimited Text
 
 ### Import Excel back to JSON
 ```bash
-dotnet run -- import --roles "./export/roles.tsv" --entries "./export/entries.tsv" -o "./new-catalog.json"
+dotnet run -- import --techstacks "./export/techstacks.tsv" --roles "./export/roles.tsv" --entries "./export/entries.tsv" -o "./new-catalog.json"
+```
+
+### Migrate a v1.0 catalog to v2.0
+```bash
+dotnet run -- migrate -i old-catalog-v1.json -o catalog-migrated.json
 ```
 
 ---
@@ -89,7 +94,7 @@ Before importing:
 
 2. **Import to JSON**:
    ```bash
-   dotnet run -- import --roles "output/roles.tsv" --entries "output/entries.tsv" -o "catalog.json"
+   dotnet run -- import --techstacks "output/techstacks.tsv" --roles "output/roles.tsv" --entries "output/entries.tsv" -o "catalog.json"
    ```
 
 3. **Deploy to MCP**:
