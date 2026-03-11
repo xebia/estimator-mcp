@@ -6,23 +6,20 @@ param location string
 
 param tags object
 
-@secure()
-param acsConnectionString string
-
-param acsSenderAddress string
-
 // ── Naming ────────────────────────────────────────────────────────────────────
 
 var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
 
-var acrName             = 'cr${resourceToken}'
-var storageAccountName  = take('st${resourceToken}', 24)
-var logAnalyticsName    = 'log-${resourceToken}'
+var acrName              = 'cr${resourceToken}'
+var storageAccountName   = take('st${resourceToken}', 24)
+var logAnalyticsName     = 'log-${resourceToken}'
 var containerAppsEnvName = 'cae-${resourceToken}'
-var containerAppName    = 'ca-${resourceToken}'
-var fileShareName       = 'estimator-data'
-var storageMountName    = 'estimator-data'
-var dataMountPath       = '/data'
+var containerAppName     = 'ca-${resourceToken}'
+var emailServiceName     = 'email-${resourceToken}'
+var communicationSvcName = 'acs-${resourceToken}'
+var fileShareName        = 'estimator-data'
+var storageMountName     = 'estimator-data'
+var dataMountPath        = '/data'
 
 // ── Log Analytics (required by Container Apps) ────────────────────────────────
 
@@ -106,6 +103,42 @@ resource storageMount 'Microsoft.App/managedEnvironments/storages@2024-03-01' = 
   }
 }
 
+// ── Email Communication Services ──────────────────────────────────────────────
+
+resource emailService 'Microsoft.Communication/emailServices@2023-04-01' = {
+  name: emailServiceName
+  location: 'global'
+  tags: tags
+  properties: {
+    dataLocation: 'Europe'
+  }
+}
+
+// Azure-managed domain: provisions instantly, no DNS verification required.
+// Name must be exactly 'AzureManagedDomain' — this is an Azure convention.
+resource emailDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' = {
+  name: 'AzureManagedDomain'
+  parent: emailService
+  location: 'global'
+  tags: tags
+  properties: {
+    domainManagement: 'AzureManaged'
+  }
+}
+
+resource communicationService 'Microsoft.Communication/communicationServices@2023-04-01' = {
+  name: communicationSvcName
+  location: 'global'
+  tags: tags
+  properties: {
+    dataLocation: 'Europe'
+    linkedDomains: [emailDomain.id]
+  }
+}
+
+var acsConnectionString = communicationService.listKeys().primaryConnectionString
+var acsSenderAddress    = 'DoNotReply@${emailDomain.properties.mailFromSenderDomain}'
+
 // ── Container App ─────────────────────────────────────────────────────────────
 
 var acrPassword = acr.listCredentials().passwords[0].value
@@ -131,8 +164,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       secrets: [
-        { name: 'acr-password';           value: acrPassword }
-        { name: 'acs-connection-string';  value: acsConnectionString }
+        { name: 'acr-password',          value: acrPassword }
+        { name: 'acs-connection-string', value: acsConnectionString }
       ]
     }
     template: {
@@ -153,11 +186,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: '1Gi'
           }
           env: [
-            { name: 'ASPNETCORE_URLS';                value: 'http://+:8080' }
-            { name: 'DatabasePath';                   value: '${dataMountPath}/estimator.db' }
-            { name: 'ESTIMATOR_LOGS_PATH';            value: '${dataMountPath}/logs' }
-            { name: 'AzureEmailService__ConnectionString'; secretRef: 'acs-connection-string' }
-            { name: 'AzureEmailService__SenderAddress';   value: acsSenderAddress }
+            { name: 'ASPNETCORE_URLS',                value: 'http://+:8080' }
+            { name: 'DatabasePath',                   value: '${dataMountPath}/estimator.db' }
+            { name: 'ESTIMATOR_LOGS_PATH',            value: '${dataMountPath}/logs' }
+            { name: 'AzureEmailService__ConnectionString', secretRef: 'acs-connection-string' }
+            { name: 'AzureEmailService__SenderAddress',   value: acsSenderAddress }
           ]
           volumeMounts: [
             {

@@ -9,13 +9,6 @@ param environmentName string
 @description('Primary Azure region for all resources')
 param location string
 
-@secure()
-@description('Azure Communication Services connection string for email verification')
-param acsConnectionString string = ''
-
-@description('Verified sender email address for ACS (e.g. DoNotReply@your-domain.azurecomm.net)')
-param acsSenderAddress string = ''
-
 var tags = { 'azd-env-name': environmentName }
 
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
@@ -31,8 +24,6 @@ module resources 'resources.bicep' = {
     environmentName: environmentName
     location: location
     tags: tags
-    acsConnectionString: acsConnectionString
-    acsSenderAddress: acsSenderAddress
   }
 }
 
