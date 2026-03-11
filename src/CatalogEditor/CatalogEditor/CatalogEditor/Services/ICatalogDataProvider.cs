@@ -7,9 +7,21 @@ public interface ICatalogDataProvider
     Task<CatalogData> LoadCatalogAsync();
     Task SaveCatalogAsync(CatalogData catalog);
 
+    // TechStacks
+    Task<List<TechStack>> GetTechStacksAsync();
+    Task<TechStack?> GetTechStackAsync(string id);
+    Task SaveTechStackAsync(TechStack techStack);
+    /// <summary>
+    /// Deletes a techstack and its roles. Throws ReferentialIntegrityException if any catalog entries reference this techstack.
+    /// </summary>
+    Task DeleteTechStackAsync(string id);
+
     // Roles
     Task<List<Role>> GetRolesAsync();
     Task<Role?> GetRoleAsync(string id);
+    Task<List<Role>> GetGlobalRolesAsync();
+    Task<List<Role>> GetRolesForTechStackAsync(string techStackId);
+    Task<List<Role>> GetAvailableRolesForEntryAsync(string? techStackId);
     Task SaveRoleAsync(Role role);
     /// <summary>
     /// Deletes a role. Throws ReferentialIntegrityException if the role is referenced by catalog entries.

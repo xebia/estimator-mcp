@@ -37,6 +37,7 @@ else
                 <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
+                <th>Tech Stack</th>
                 <th>Copilot Multiplier</th>
                 <th>Actions</th>
             </tr>
@@ -48,6 +49,16 @@ else
                     <td>@role.Id</td>
                     <td>@role.Name</td>
                     <td>@role.Description</td>
+                    <td>
+                        @if (string.IsNullOrEmpty(role.TechStackId))
+                        {
+                            <span class="badge bg-secondary">Global</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary">@GetTechStackName(role.TechStackId)</span>
+                        }
+                    </td>
                     <td>@role.CopilotMultiplier</td>
                     <td>
                         <button class="btn btn-sm btn-secondary" @onclick="() => Edit(role.Id)">Edit</button>
@@ -61,17 +72,22 @@ else
 
 @code {
     private List<Role>? roles;
+    private List<TechStack>? techStacks;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadRoles();
+        await LoadData();
     }
 
-    private async Task LoadRoles()
+    private async Task LoadData()
     {
         roles = await DataProvider.GetRolesAsync();
+        techStacks = await DataProvider.GetTechStacksAsync();
     }
+
+    private string GetTechStackName(string techStackId) =>
+        techStacks?.FirstOrDefault(ts => ts.Id == techStackId)?.Name ?? techStackId;
 
     private void CreateNew()
     {
@@ -91,7 +107,7 @@ else
             try
             {
                 await DataProvider.DeleteRoleAsync(id);
-                await LoadRoles();
+                await LoadData();
             }
             catch (ReferentialIntegrityException ex)
             {

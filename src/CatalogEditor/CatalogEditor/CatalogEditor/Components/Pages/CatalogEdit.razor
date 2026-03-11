@@ -16,7 +16,7 @@
     </div>
 }
 
-@if (entry == null || roles == null)
+@if (entry == null || allRoles == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -52,14 +52,12 @@ else
             <label for="techStack" class="form-label">Tech Stack</label>
             <InputSelect id="techStack" class="form-control" @bind-Value="entry.TechStack">
                 <option value="">-- Any/Shared --</option>
-                <option value="salesforce">Salesforce</option>
-                <option value="blazor-azure">Blazor/Azure</option>
-                <option value="nodejs">Node.js</option>
-                <option value="react-aws">React/AWS</option>
-                <option value="dotnet">ASP.NET Core</option>
-                <option value="shared">Shared (cross-platform)</option>
+                @foreach (var ts in techStacks ?? [])
+                {
+                    <option value="@ts.Id">@ts.Name</option>
+                }
             </InputSelect>
-            <div class="form-text">Technology platform for this feature. Used for filtering in tech-specific projects.</div>
+            <div class="form-text">Technology platform for this feature. Role estimates will be filtered to this tech stack's roles plus global roles.</div>
         </div>
 
         <div class="mb-3">
@@ -86,7 +84,7 @@ else
                         <td>
                             <InputSelect class="form-control" @bind-Value="estimate.RoleId">
                                 <option value="">-- Select role --</option>
-                                @foreach (var role in roles)
+                                @foreach (var role in AvailableRoles)
                                 {
                                     <option value="@role.Id">@role.Name (@role.Id)</option>
                                 }
@@ -121,9 +119,14 @@ else
     public string? Id { get; set; }
 
     private CatalogEntry entry = new();
-    private List<Role>? roles;
+    private List<TechStack>? techStacks;
+    private List<Role>? allRoles;
     private string? errorMessage;
     private bool IsNew => string.IsNullOrEmpty(Id);
+
+    // Roles available for the currently selected tech stack: global + techstack-specific
+    private List<Role> AvailableRoles =>
+        allRoles?.Where(r => string.IsNullOrEmpty(r.TechStackId) || r.TechStackId == entry.TechStack).ToList() ?? [];
 
     // Helper property to bind tags as a comma-separated string
     private string tagsString
@@ -147,7 +150,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        roles = await DataProvider.GetRolesAsync();
+        allRoles = await DataProvider.GetRolesAsync();
+        techStacks = await DataProvider.GetTechStacksAsync();
 
         if (!IsNew && Id != null)
         {
