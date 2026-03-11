@@ -13,7 +13,7 @@ app.Configure(config =>
 
     config.AddCommand<ImportCommand>("import")
         .WithDescription("Import TSV files back to catalog JSON format")
-        .WithExample("import", "--roles", "roles.tsv", "--entries", "entries.tsv", "-o", "catalog.json");
+        .WithExample("import", "--techstacks", "techstacks.tsv", "--roles", "roles.tsv", "--entries", "entries.tsv", "-o", "catalog.json");
 
     config.AddCommand<MigrateCommand>("migrate")
         .WithDescription("Migrate a v1.0 catalog JSON to v2.0 format")

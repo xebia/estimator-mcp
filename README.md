@@ -104,10 +104,13 @@ Command-line tool for bulk editing via Excel/spreadsheet applications.
 # Step 1: Export to TSV
 dotnet run -- export -i catalog.json -o ./export/
 
-# Step 2: Edit in Excel (roles.tsv, entries.tsv)
+# Step 2: Edit in Excel (techstacks.tsv, roles.tsv, entries.tsv)
 
 # Step 3: Import back to JSON
-dotnet run -- import --roles ./export/roles.tsv --entries ./export/entries.tsv -o updated.json
+dotnet run -- import --techstacks ./export/techstacks.tsv --roles ./export/roles.tsv --entries ./export/entries.tsv -o updated.json
+
+# Migrate a v1.0 catalog to v2.0 format
+dotnet run -- migrate -i catalog-v1.json -o catalog-v2.json
 ```
 
 See [CatalogCli README](src/CatalogCli/README.md) for detailed usage.
