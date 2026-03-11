@@ -1,3 +1,4 @@
+using EstimatorMcp.Web.Api;
 using EstimatorMcp.Web.Auth;
 using EstimatorMcp.Web.Components;
 using EstimatorMcp.Web.Data;
@@ -92,6 +93,9 @@ try
 
     // MCP endpoint (HTTP/Streamable) — requires Bearer token
     app.MapMcp("/mcp").RequireAuthorization();
+
+    // REST API
+    app.MapCatalogApi();
 
     // Blazor
     app.MapRazorComponents<App>()
