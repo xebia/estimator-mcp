@@ -15,24 +15,30 @@ The MCP Server system must support the following capabilities:
 | Tooling & Implementation | • LLM-collaborative interface: AI interviews user to collect task descriptions and t-shirt sizing.<br>• For MVP: AI feeds tasks to MCP server and returns time estimates to user (no external integrations). |
 
 3. 👥 Roles and Responsibilities (Implementation Roles)
-The estimation process tracks effort allocation across the following implementation roles:
+The estimation process tracks effort allocation across implementation roles that are divided into two categories:
 
-| Role Name | Key Responsibilities | Time Estimates |
-|-----------|---------------------|----------------|
-| Developer | Implementing function points/features (back-end, front-end, business logic). | Per-task hours/days from catalog. |
-| DevOps Engineer | Infrastructure, deployment, CI/CD pipelines, environment setup. | Per-task hours/days from catalog. |
-| Engagement Manager | Project coordination, Product Owner liaison, team communication. | Per-task allocation (fractional or full-time as % of core tasks). |
+- **Global roles:** Shared across all tech stacks (e.g., Engagement Manager, QA Engineer). These apply to any catalog entry regardless of platform.
+- **Tech stack-specific roles:** Scoped to a single technology platform (e.g., Salesforce Developer, .NET Developer, AWS Architect). These only appear in estimates for catalog entries belonging to that tech stack.
+
+| Role Name | Scope | Key Responsibilities | Time Estimates |
+|-----------|-------|---------------------|----------------|
+| Developer (e.g., `sf-dev`, `dotnet-dev`) | Tech stack-specific | Implementing function points/features for the given platform. | Per-task hours/days from catalog. |
+| DevOps Engineer (e.g., `aws-devops`) | Tech stack-specific | Infrastructure, deployment, CI/CD pipelines, environment setup. | Per-task hours/days from catalog. |
+| Engagement Manager (`em`) | Global | Project coordination, Product Owner liaison, team communication. | Per-task allocation (fractional or full-time as % of core tasks). |
+| QA Engineer (`qa`) | Global | Test planning, test execution, and quality assurance across all platforms. | Per-task hours/days from catalog. |
 
 **Note:** User roles (Catalog Manager, Estimator) and security/access control are deferred to a future phase. For MVP, catalog is file-based with automatic version history.
 
 4. 💻 Technical Considerations
 
 A. Data Model
-The catalog contains features/work items directly with role time estimates:
+The catalog contains features/work items with role time estimates, organized around technology platforms:
 
-- **Feature/Task (Catalog Entry):** ID, Name, Description, Category (optional tags/domains).
+- **TechStack (first-class entity):** ID, Name, Description, and a list of platform-specific roles (each with a Copilot multiplier). Examples: Salesforce, .NET, AWS, Python.
+- **Global Roles:** Roles not tied to any specific tech stack (e.g., Engagement Manager, QA Engineer), shared across all catalog entries.
+- **Feature/Task (Catalog Entry):** ID, Name, Description, Category, TechStack reference, Tags, and role time estimates.
 - **T-Shirt Sizing Mapping:** Each feature has a Medium (M) baseline, with other sizes (XS, S, L, XL) calculated using Fibonacci scaling.
-- **Role-Time Mapping:** For each catalog entry and sizing level, estimated hours/days per role (Developer, DevOps Engineer, Engagement Manager).
+- **Role-Time Mapping:** For each catalog entry and sizing level, estimated hours/days per role (tech stack-specific roles + global roles).
 - **Productivity Adjustment:** Copilot-enhanced productivity multiplier is defined per role and applied to all tasks for that role.
 
 B. Catalog Storage
@@ -45,20 +51,29 @@ The MCP server exposes tools with detailed descriptions (used by LLM for tool se
 
 1. **get_catalog_features** (tool): Returns a list of all available features from the catalog, including feature ID, name, and description. This allows the AI to present options to the user or search for relevant features.
    - **Input**: Optional category filter
-   - **Output**: Array of objects with `id`, `name`, `description`, and `category` fields
+   - **Output**: Array of objects with `id`, `name`, `description`, `category`, `techStack`, and `tags` fields
 
 2. **calculate_estimate** (tool): Accepts a list of features (with feature IDs and t-shirt sizes) and returns the calculated time estimates per role for the entire project.
    - **Input**: Array of objects with `featureId` and `size` (XS, S, M, L, XL)
    - **Output**: Object with total hours per role and breakdown per feature/role
-   
+
 3. **get_instructions** (tool): Returns markdown document with overall guidance for the LLM on how to use the MCP server and interact with users to gather project requirements.
    - **Input**: None
    - **Output**: Markdown-formatted instructions
 
-4. Top-level MCP description directs the LLM to invoke the `get_instructions` tool first.
+4. **get_catalog_tech_stacks** (tool): Returns all tech stacks in the catalog with their roles, feature counts, and the list of global roles. Useful when the user is unsure which technologies are available.
+   - **Input**: None
+   - **Output**: List of tech stacks (id, name, description, roles, featureCount) plus the globalRoles list
+
+5. **get_roles_for_tech_stack** (tool): Returns all roles available for a specific tech stack — both tech stack-specific roles and global roles.
+   - **Input**: `techStackId` (string, required)
+   - **Output**: Tech stack details, tech stack-specific roles, global roles
+
+6. Top-level MCP description directs the LLM to invoke the `get_instructions` tool first.
 
 D. AI/LLM Workflow (MVP)
 For the proof-of-concept:
+0. *(Optional)* If the user is unsure about available technologies, LLM calls `get_catalog_tech_stacks` to present the list of supported tech stacks and their roles before proceeding.
 1. LLM calls `get_instructions` tool to understand how to assist the user.
 2. LLM calls `get_catalog_features` to retrieve available features from the catalog.
 3. LLM interviews user to understand project scope, discussing features that match catalog items.
@@ -85,10 +100,12 @@ For the proof-of-concept:
 {
   "features": [
     {
-      "id": "basic-crud",
-      "name": "Basic CRUD Feature",
-      "description": "Implement create, read, update, delete operations for a domain entity",
-      "category": "feature"
+      "id": "sf-apex-class",
+      "name": "Apex Class Development",
+      "description": "Custom Apex class with unit tests",
+      "category": "feature",
+      "techStack": "salesforce",
+      "tags": ["salesforce", "apex", "backend"]
     },
     // ... more features
   ]
@@ -174,7 +191,66 @@ For the proof-of-concept:
 - Example conversations and outputs
 - Guidance on presenting results
 
-6. �🗺️ Next Steps
+### Tool: `get_catalog_tech_stacks`
+
+**Purpose:** Return all tech stacks in the catalog with their associated roles and feature counts, plus the list of global roles. Use this when the user needs to understand which technology platforms are available before scoping a project.
+
+**Input Schema:** None
+
+**Output Schema:**
+```json
+{
+  "techStacks": [
+    {
+      "id": "salesforce",
+      "name": "Salesforce",
+      "description": "Salesforce CRM platform",
+      "featureCount": 12,
+      "roles": [
+        { "id": "sf-dev", "name": "Salesforce Developer", "copilotMultiplier": 0.70 },
+        { "id": "sf-admin", "name": "Salesforce Admin", "copilotMultiplier": 0.85 }
+      ]
+    }
+    // ... more tech stacks
+  ],
+  "globalRoles": [
+    { "id": "em", "name": "Engagement Manager", "copilotMultiplier": 1.0 },
+    { "id": "qa", "name": "QA Engineer", "copilotMultiplier": 0.65 }
+  ]
+}
+```
+
+### Tool: `get_roles_for_tech_stack`
+
+**Purpose:** Return all roles available for a specific tech stack — both the roles scoped to that stack and all global roles. Use this to confirm role assignments before calling `calculate_estimate`.
+
+**Input Schema:**
+```json
+{
+  "techStackId": "salesforce"  // Required: the id of the tech stack
+}
+```
+
+**Output Schema:**
+```json
+{
+  "techStack": {
+    "id": "salesforce",
+    "name": "Salesforce",
+    "description": "Salesforce CRM platform"
+  },
+  "techStackRoles": [
+    { "id": "sf-dev", "name": "Salesforce Developer", "description": "Apex, LWC, Flows development", "copilotMultiplier": 0.70 },
+    { "id": "sf-admin", "name": "Salesforce Admin", "description": "Configuration, user management", "copilotMultiplier": 0.85 }
+  ],
+  "globalRoles": [
+    { "id": "em", "name": "Engagement Manager", "description": "Project coordination", "copilotMultiplier": 1.0 },
+    { "id": "qa", "name": "QA Engineer", "description": "Test planning and execution", "copilotMultiplier": 0.65 }
+  ]
+}
+```
+
+6.�🗺️ Next Steps
 
 **Phase 1 (MVP):**
 1. **Catalog Definition:** Conduct exercise to identify core tasks/features with historical time estimates per role; apply Copilot productivity multipliers.
