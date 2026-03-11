@@ -19,7 +19,7 @@ var emailServiceName     = 'email-${resourceToken}'
 var communicationSvcName = 'acs-${resourceToken}'
 var fileShareName        = 'estimator-data'
 var storageMountName     = 'estimator-data'
-var dataMountPath        = '/data'
+var dataMountPath        = '/home/app/data'
 
 // ── Log Analytics (required by Container Apps) ────────────────────────────────
 
@@ -169,13 +169,9 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       ]
     }
     template: {
-      volumes: [
-        {
-          name: storageMountName
-          storageType: 'AzureFile'
-          storageName: storageMountName
-        }
-      ]
+      // NOTE: SQLite on Azure Files (SMB) fails due to missing POSIX advisory lock support.
+      // Data is stored on the container's local filesystem for now (ephemeral).
+      // TODO: migrate to Azure Files NFS (Premium storage + VNet) or a cloud database.
       containers: [
         {
           name: 'estimator-mcp'
@@ -192,21 +188,14 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AzureEmailService__ConnectionString', secretRef: 'acs-connection-string' }
             { name: 'AzureEmailService__SenderAddress',   value: acsSenderAddress }
           ]
-          volumeMounts: [
-            {
-              volumeName: storageMountName
-              mountPath: dataMountPath
-            }
-          ]
         }
       ]
       scale: {
-        minReplicas: 0
+        minReplicas: 1
         maxReplicas: 1
       }
     }
   }
-  dependsOn: [storageMount]
 }
 
 // ── Outputs ───────────────────────────────────────────────────────────────────

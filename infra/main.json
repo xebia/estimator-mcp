@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "15679835201403611709"
+      "templateHash": "7021569599130159939"
     }
   },
   "parameters": {
@@ -66,7 +66,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.41.2.15936",
-              "templateHash": "9376157660365592094"
+              "templateHash": "10180927412003705050"
             }
           },
           "parameters": {
@@ -97,7 +97,7 @@
             "communicationSvcName": "[format('acs-{0}', variables('resourceToken'))]",
             "fileShareName": "estimator-data",
             "storageMountName": "estimator-data",
-            "dataMountPath": "/data"
+            "dataMountPath": "/home/app/data"
           },
           "resources": [
             {
@@ -271,13 +271,6 @@
                   ]
                 },
                 "template": {
-                  "volumes": [
-                    {
-                      "name": "[variables('storageMountName')]",
-                      "storageType": "AzureFile",
-                      "storageName": "[variables('storageMountName')]"
-                    }
-                  ],
                   "containers": [
                     {
                       "name": "estimator-mcp",
@@ -307,17 +300,11 @@
                           "name": "AzureEmailService__SenderAddress",
                           "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', variables('emailServiceName'), 'AzureManagedDomain'), '2023-04-01').mailFromSenderDomain)]"
                         }
-                      ],
-                      "volumeMounts": [
-                        {
-                          "volumeName": "[variables('storageMountName')]",
-                          "mountPath": "[variables('dataMountPath')]"
-                        }
                       ]
                     }
                   ],
                   "scale": {
-                    "minReplicas": 0,
+                    "minReplicas": 1,
                     "maxReplicas": 1
                   }
                 }
@@ -326,8 +313,7 @@
                 "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))]",
                 "[resourceId('Microsoft.Communication/communicationServices', variables('communicationSvcName'))]",
                 "[resourceId('Microsoft.App/managedEnvironments', variables('containerAppsEnvName'))]",
-                "[resourceId('Microsoft.Communication/emailServices/domains', variables('emailServiceName'), 'AzureManagedDomain')]",
-                "[resourceId('Microsoft.App/managedEnvironments/storages', variables('containerAppsEnvName'), variables('storageMountName'))]"
+                "[resourceId('Microsoft.Communication/emailServices/domains', variables('emailServiceName'), 'AzureManagedDomain')]"
               ]
             }
           ],
