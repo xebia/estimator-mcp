@@ -7,7 +7,8 @@ namespace CatalogEditor.Services;
 public class JsonCatalogDataProvider : ICatalogDataProvider
 {
     private readonly string _dataDirectory;
-    private readonly JsonSerializerOptions _jsonOptions;
+    private readonly JsonSerializerOptions _writeOptions;
+    private readonly JsonSerializerOptions _readOptions;
     private CatalogData? _cachedCatalog;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
@@ -16,11 +17,16 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
         _dataDirectory = configuration["CatalogDataPath"] ?? Path.Combine(Directory.GetCurrentDirectory(), "data", "catalogs");
         Directory.CreateDirectory(_dataDirectory);
 
-        _jsonOptions = new JsonSerializerOptions
+        _writeOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        _readOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
         };
     }
 
@@ -36,7 +42,7 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
             if (latestFile != null && File.Exists(latestFile))
             {
                 var json = await File.ReadAllTextAsync(latestFile);
-                _cachedCatalog = JsonSerializer.Deserialize<CatalogData>(json, _jsonOptions) ?? new CatalogData();
+                _cachedCatalog = CatalogData.DeserializeWithMigration(json, _readOptions);
             }
             else
             {
@@ -60,7 +66,7 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
             var fileName = $"catalog-{catalog.Timestamp:yyyy-MM-ddTHH-mm-ssZ}.json";
             var filePath = Path.Combine(_dataDirectory, fileName);
 
-            var json = JsonSerializer.Serialize(catalog, _jsonOptions);
+            var json = JsonSerializer.Serialize(catalog, _writeOptions);
             await File.WriteAllTextAsync(filePath, json);
 
             _cachedCatalog = catalog;
@@ -77,6 +83,53 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
         return files.OrderByDescending(f => f).FirstOrDefault();
     }
 
+    // TechStacks
+    public async Task<List<TechStack>> GetTechStacksAsync()
+    {
+        var catalog = await LoadCatalogAsync();
+        return catalog.TechStacks;
+    }
+
+    public async Task<TechStack?> GetTechStackAsync(string id)
+    {
+        var catalog = await LoadCatalogAsync();
+        return catalog.TechStacks.FirstOrDefault(ts => ts.Id == id);
+    }
+
+    public async Task SaveTechStackAsync(TechStack techStack)
+    {
+        var catalog = await LoadCatalogAsync();
+        var existing = catalog.TechStacks.FirstOrDefault(ts => ts.Id == techStack.Id);
+        if (existing != null)
+        {
+            // Preserve existing roles when updating metadata
+            techStack.Roles = existing.Roles;
+            catalog.TechStacks.Remove(existing);
+        }
+        catalog.TechStacks.Add(techStack);
+        await SaveCatalogAsync(catalog);
+    }
+
+    public async Task DeleteTechStackAsync(string id)
+    {
+        var catalog = await LoadCatalogAsync();
+        var techStack = catalog.TechStacks.FirstOrDefault(ts => ts.Id == id);
+        if (techStack == null) return;
+
+        var referencingEntries = catalog.Catalog
+            .Where(e => e.TechStack == id)
+            .Select(e => e.Name)
+            .ToList();
+
+        if (referencingEntries.Any())
+        {
+            throw new ReferentialIntegrityException("TechStack", id, referencingEntries);
+        }
+
+        catalog.TechStacks.Remove(techStack);
+        await SaveCatalogAsync(catalog);
+    }
+
     // Roles
     public async Task<List<Role>> GetRolesAsync()
     {
@@ -90,37 +143,84 @@ public class JsonCatalogDataProvider : ICatalogDataProvider
         return catalog.AllRoles.FirstOrDefault(r => r.Id == id);
     }
 
+    public async Task<List<Role>> GetGlobalRolesAsync()
+    {
+        var catalog = await LoadCatalogAsync();
+        return catalog.GlobalRoles;
+    }
+
+    public async Task<List<Role>> GetRolesForTechStackAsync(string techStackId)
+    {
+        var catalog = await LoadCatalogAsync();
+        var techStack = catalog.TechStacks.FirstOrDefault(ts => ts.Id == techStackId);
+        return techStack?.Roles ?? [];
+    }
+
+    public async Task<List<Role>> GetAvailableRolesForEntryAsync(string? techStackId)
+    {
+        var catalog = await LoadCatalogAsync();
+        return catalog.GetAvailableRolesForTechStack(techStackId);
+    }
+
     public async Task SaveRoleAsync(Role role)
     {
         var catalog = await LoadCatalogAsync();
-        var existing = catalog.GlobalRoles.FirstOrDefault(r => r.Id == role.Id);
-        if (existing != null)
+
+        if (string.IsNullOrEmpty(role.TechStackId))
         {
-            catalog.GlobalRoles.Remove(existing);
+            // Save as global role
+            var existing = catalog.GlobalRoles.FirstOrDefault(r => r.Id == role.Id);
+            if (existing != null) catalog.GlobalRoles.Remove(existing);
+            catalog.GlobalRoles.Add(role);
         }
-        catalog.GlobalRoles.Add(role);
+        else
+        {
+            // Save into the matching techstack's roles list
+            var techStack = catalog.TechStacks.FirstOrDefault(ts => ts.Id == role.TechStackId)
+                ?? throw new InvalidOperationException($"TechStack '{role.TechStackId}' not found");
+
+            var existing = techStack.Roles.FirstOrDefault(r => r.Id == role.Id);
+            if (existing != null) techStack.Roles.Remove(existing);
+            techStack.Roles.Add(role);
+        }
+
         await SaveCatalogAsync(catalog);
     }
 
     public async Task DeleteRoleAsync(string id)
     {
         var catalog = await LoadCatalogAsync();
-        var role = catalog.GlobalRoles.FirstOrDefault(r => r.Id == id);
-        if (role != null)
+
+        // Check referential integrity first
+        var referencingEntries = catalog.Catalog
+            .Where(e => e.MediumEstimates.Any(m => m.RoleId == id))
+            .Select(e => e.Name)
+            .ToList();
+
+        if (referencingEntries.Any())
         {
-            // Check referential integrity
-            var referencingEntries = catalog.Catalog
-                .Where(e => e.MediumEstimates.Any(m => m.RoleId == id))
-                .Select(e => e.Name)
-                .ToList();
+            throw new ReferentialIntegrityException("Role", id, referencingEntries);
+        }
 
-            if (referencingEntries.Any())
-            {
-                throw new ReferentialIntegrityException("Role", id, referencingEntries);
-            }
-
-            catalog.GlobalRoles.Remove(role);
+        // Try global roles
+        var globalRole = catalog.GlobalRoles.FirstOrDefault(r => r.Id == id);
+        if (globalRole != null)
+        {
+            catalog.GlobalRoles.Remove(globalRole);
             await SaveCatalogAsync(catalog);
+            return;
+        }
+
+        // Try techstack roles
+        foreach (var techStack in catalog.TechStacks)
+        {
+            var tsRole = techStack.Roles.FirstOrDefault(r => r.Id == id);
+            if (tsRole != null)
+            {
+                techStack.Roles.Remove(tsRole);
+                await SaveCatalogAsync(catalog);
+                return;
+            }
         }
     }
 

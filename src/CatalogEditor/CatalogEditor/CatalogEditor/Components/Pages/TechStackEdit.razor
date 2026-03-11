@@ -1,0 +1,125 @@
+@page "/techstacks/new"
+@page "/techstacks/edit/{id}"
+@inject ICatalogDataProvider DataProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "Create New Tech Stack" : $"Edit Tech Stack: {techStack.Name}")</PageTitle>
+
+<h1>@(IsNew ? "Create New Tech Stack" : "Edit Tech Stack")</h1>
+
+@if (techStack == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="techStack" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="id" class="form-label">ID</label>
+            <InputText id="id" class="form-control" @bind-Value="techStack.Id" disabled="@(!IsNew)" />
+            <div class="form-text">Unique identifier (lowercase, hyphens allowed). Cannot be changed after creation.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="techStack.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="techStack.Description" rows="3" />
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+
+    @if (!IsNew)
+    {
+        <hr />
+        <h3>Roles in this Tech Stack</h3>
+        @if (roles != null && roles.Any())
+        {
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Copilot Multiplier</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in roles)
+                    {
+                        <tr>
+                            <td>@role.Id</td>
+                            <td>@role.Name</td>
+                            <td>@role.CopilotMultiplier</td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary" @onclick="() => EditRole(role.Id)">Edit</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">No roles yet.</p>
+        }
+        <a class="btn btn-sm btn-outline-primary" href="/roles/new?techStackId=@Id">Add Role to This Tech Stack</a>
+    }
+}
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private TechStack techStack = new();
+    private List<Role>? roles;
+    private bool IsNew => string.IsNullOrEmpty(Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsNew && Id != null)
+        {
+            var existing = await DataProvider.GetTechStackAsync(Id);
+            if (existing != null)
+            {
+                techStack = existing;
+                roles = await DataProvider.GetRolesForTechStackAsync(Id);
+            }
+            else
+            {
+                Navigation.NavigateTo("/techstacks");
+            }
+        }
+        else
+        {
+            techStack = new TechStack();
+        }
+    }
+
+    private async Task Save()
+    {
+        await DataProvider.SaveTechStackAsync(techStack);
+        Navigation.NavigateTo("/techstacks");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/techstacks");
+    }
+
+    private void EditRole(string roleId)
+    {
+        Navigation.NavigateTo($"/roles/edit/{roleId}");
+    }
+}
