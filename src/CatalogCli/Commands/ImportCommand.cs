@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Text.Json;
 using CatalogCli.Services;
 using EstimatorMcp.Models;
 using Spectre.Console;
@@ -7,7 +6,7 @@ using Spectre.Console.Cli;
 
 namespace CatalogCli.Commands;
 
-public class ImportCommand : Command<ImportCommand.Settings>
+public class ImportCommand : AsyncCommand<ImportCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -23,17 +22,17 @@ public class ImportCommand : Command<ImportCommand.Settings>
         [Description("Path to the entries TSV file")]
         public string EntriesPath { get; set; } = string.Empty;
 
-        [CommandOption("-o|--output <PATH>")]
-        [Description("Output path for the catalog JSON file")]
-        public string OutputPath { get; set; } = string.Empty;
-
         [CommandOption("--validate-only")]
-        [Description("Validate without writing output")]
+        [Description("Validate TSV files without uploading to the server")]
         public bool ValidateOnly { get; set; }
 
-        [CommandOption("-f|--force")]
-        [Description("Overwrite existing output file without prompting")]
-        public bool Force { get; set; }
+        [CommandOption("--server <URL>")]
+        [Description("API server URL (overrides config and ESTIMATOR_API_URL)")]
+        public string? Server { get; set; }
+
+        [CommandOption("--token <TOKEN>")]
+        [Description("Bearer token (overrides config and ESTIMATOR_API_TOKEN)")]
+        public string? Token { get; set; }
 
         public override ValidationResult Validate()
         {
@@ -46,14 +45,11 @@ public class ImportCommand : Command<ImportCommand.Settings>
             if (string.IsNullOrWhiteSpace(EntriesPath))
                 return ValidationResult.Error("Entries file path (--entries) is required");
 
-            if (string.IsNullOrWhiteSpace(OutputPath))
-                return ValidationResult.Error("Output path (-o) is required");
-
             return ValidationResult.Success();
         }
     }
 
-    public override int Execute(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
         var validationService = new ValidationService();
         var importer = new TsvImporter();
@@ -65,108 +61,57 @@ public class ImportCommand : Command<ImportCommand.Settings>
             AnsiConsole.MarkupLine($"[red]TechStacks file not found: {Markup.Escape(settings.TechStacksPath)}[/]");
             return 1;
         }
-
         if (!File.Exists(settings.RolesPath))
         {
             AnsiConsole.MarkupLine($"[red]Roles file not found: {Markup.Escape(settings.RolesPath)}[/]");
             return 1;
         }
-
         if (!File.Exists(settings.EntriesPath))
         {
             AnsiConsole.MarkupLine($"[red]Entries file not found: {Markup.Escape(settings.EntriesPath)}[/]");
             return 1;
         }
 
-        // Import techstacks first
+        // Parse TSV files
         AnsiConsole.MarkupLine("[dim]Reading techstacks.tsv...[/]");
         var techStacks = importer.ImportTechStacks(settings.TechStacksPath, errors);
-
-        // Build valid techstack IDs set for role validation
         var validTechStackIds = new HashSet<string>(techStacks.Select(ts => ts.Id), StringComparer.Ordinal);
 
-        // Import roles
         AnsiConsole.MarkupLine("[dim]Reading roles.tsv...[/]");
         var roles = importer.ImportRoles(settings.RolesPath, validTechStackIds, errors);
-
-        // Build valid role IDs set for entry validation
         var validRoleIds = new HashSet<string>(roles.Select(r => r.Id), StringComparer.Ordinal);
 
-        // Import entries
         AnsiConsole.MarkupLine("[dim]Reading entries.tsv...[/]");
         var entries = importer.ImportEntries(settings.EntriesPath, validRoleIds, errors);
 
-        // Display any errors
         if (errors.Count > 0)
         {
             validationService.DisplayErrors(errors);
             return 1;
         }
 
-        // Organize roles into techstacks and global roles
+        // Organize into catalog structure
         var globalRoles = new List<Role>();
         var techStackRolesMap = new Dictionary<string, List<Role>>();
 
         foreach (var role in roles)
         {
             if (string.IsNullOrEmpty(role.TechStackId))
-            {
                 globalRoles.Add(role);
-            }
             else
             {
                 if (!techStackRolesMap.ContainsKey(role.TechStackId))
-                {
-                    techStackRolesMap[role.TechStackId] = new List<Role>();
-                }
+                    techStackRolesMap[role.TechStackId] = [];
                 techStackRolesMap[role.TechStackId].Add(role);
             }
         }
 
-        // Assign roles to their techstacks
         foreach (var techStack in techStacks)
         {
-            if (techStackRolesMap.TryGetValue(techStack.Id, out var techStackRoles))
-            {
-                techStack.Roles = techStackRoles.OrderBy(r => r.Id, StringComparer.Ordinal).ToList();
-            }
+            if (techStackRolesMap.TryGetValue(techStack.Id, out var tsRoles))
+                techStack.Roles = tsRoles.OrderBy(r => r.Id, StringComparer.Ordinal).ToList();
         }
 
-        // Show what was parsed
-        AnsiConsole.WriteLine();
-        var summaryTable = new Table()
-            .Border(TableBorder.Rounded)
-            .AddColumn("Item")
-            .AddColumn(new TableColumn("Count").Centered());
-
-        summaryTable.AddRow("TechStacks", techStacks.Count.ToString());
-        summaryTable.AddRow("Roles (Total)", roles.Count.ToString());
-        summaryTable.AddRow("  - Global", globalRoles.Count.ToString());
-        summaryTable.AddRow("  - TechStack-specific", (roles.Count - globalRoles.Count).ToString());
-        summaryTable.AddRow("Entries", entries.Count.ToString());
-
-        AnsiConsole.Write(summaryTable);
-        AnsiConsole.MarkupLine("\n[green]Validation passed[/]");
-
-        // If validate-only, stop here
-        if (settings.ValidateOnly)
-        {
-            AnsiConsole.MarkupLine("[dim]Validate-only mode - no output written[/]");
-            return 0;
-        }
-
-        // Check for existing output file
-        if (File.Exists(settings.OutputPath) && !settings.Force)
-        {
-            AnsiConsole.MarkupLine($"[yellow]Output file already exists: {Markup.Escape(settings.OutputPath)}[/]");
-            if (!AnsiConsole.Confirm("Overwrite existing file?", false))
-            {
-                AnsiConsole.MarkupLine("[dim]Import cancelled[/]");
-                return 0;
-            }
-        }
-
-        // Create catalog
         var catalog = new CatalogData
         {
             Version = "2.0",
@@ -179,36 +124,60 @@ public class ImportCommand : Command<ImportCommand.Settings>
                 .ToList()
         };
 
-        // Also sort MediumEstimates within each entry
         foreach (var entry in catalog.Catalog)
+            entry.MediumEstimates = entry.MediumEstimates.OrderBy(e => e.RoleId, StringComparer.Ordinal).ToList();
+
+        // Summary
+        AnsiConsole.WriteLine();
+        var summaryTable = new Spectre.Console.Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("Item")
+            .AddColumn(new TableColumn("Count").Centered());
+
+        summaryTable.AddRow("TechStacks", techStacks.Count.ToString());
+        summaryTable.AddRow("Roles (Total)", roles.Count.ToString());
+        summaryTable.AddRow("  - Global", globalRoles.Count.ToString());
+        summaryTable.AddRow("  - TechStack-specific", (roles.Count - globalRoles.Count).ToString());
+        summaryTable.AddRow("Entries", entries.Count.ToString());
+        AnsiConsole.Write(summaryTable);
+        AnsiConsole.MarkupLine("\n[green]Validation passed[/]");
+
+        if (settings.ValidateOnly)
         {
-            entry.MediumEstimates = entry.MediumEstimates
-                .OrderBy(e => e.RoleId, StringComparer.Ordinal)
-                .ToList();
+            AnsiConsole.MarkupLine("[dim]Validate-only mode — nothing uploaded[/]");
+            return 0;
         }
 
-        // Write output
+        // Resolve API credentials
+        var (serverUrl, token) = CliConfig.Resolve(settings.Server, settings.Token);
+
+        if (string.IsNullOrEmpty(serverUrl))
+        {
+            AnsiConsole.MarkupLine("[red]Server URL is not configured.[/]");
+            AnsiConsole.MarkupLine("[dim]Run: catalogcli configure --server <URL> --token <TOKEN>[/]");
+            return 1;
+        }
+
+        if (string.IsNullOrEmpty(token))
+        {
+            AnsiConsole.MarkupLine("[red]API token is not configured.[/]");
+            AnsiConsole.MarkupLine("[dim]Run: catalogcli configure --server <URL> --token <TOKEN>[/]");
+            return 1;
+        }
+
+        // Upload to server
+        using var client = new ApiClient(serverUrl, token);
+
         try
         {
-            var outputDirectory = Path.GetDirectoryName(settings.OutputPath);
-            if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
-            {
-                Directory.CreateDirectory(outputDirectory);
-            }
-
-            var json = JsonSerializer.Serialize(catalog, new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
-
-            File.WriteAllText(settings.OutputPath, json);
-            AnsiConsole.MarkupLine($"\n[green]Catalog written to: {Markup.Escape(settings.OutputPath)}[/]");
+            AnsiConsole.MarkupLine($"[dim]Uploading to {Markup.Escape(serverUrl)}...[/]");
+            await client.ImportCatalogAsync(catalog);
+            AnsiConsole.MarkupLine("[green]Catalog imported successfully.[/]");
             return 0;
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error writing output: {Markup.Escape(ex.Message)}[/]");
+            AnsiConsole.MarkupLine($"[red]Upload failed: {Markup.Escape(ex.Message)}[/]");
             return 1;
         }
     }

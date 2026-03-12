@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EstimatorMcp.Web</RootNamespace>
+    <AssemblyName>EstimatorMcp.Web</AssemblyName>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>a48f128b-e073-44ca-a828-6cceac7484bd</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EstimatorMcp.Models\EstimatorMcp.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Azure.Communication.Email" Version="1.0.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="content\instructions.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>data\instructions.md</TargetPath>
+    </Content>
+    <!-- Catalog seed files: included here so the .NET SDK container build picks them up.
+         azd deploy uses dotnet publish /t:PublishContainer (not docker build), so the
+         Dockerfile's COPY step is bypassed. This ensures seed data is present on fresh deploys. -->
+    <Content Include="..\CatalogEditor\CatalogEditor\CatalogEditor\data\catalogs\catalog-*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>data\catalogs\%(Filename)%(Extension)</TargetPath>
+    </Content>
+  </ItemGroup>
+</Project>
