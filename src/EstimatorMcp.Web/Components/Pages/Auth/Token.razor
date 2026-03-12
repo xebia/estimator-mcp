@@ -39,6 +39,11 @@ else if (_loaded)
 
     protected override void OnInitialized()
     {
+        // Skip during prerender — Consume removes the token from the store, so calling
+        // it during the SSR prerender pass would leave nothing for the interactive pass.
+        if (!RendererInfo.IsInteractive)
+            return;
+
         if (Guid.TryParse(Id, out var id))
         {
             var result = TokenDisplay.Consume(id);

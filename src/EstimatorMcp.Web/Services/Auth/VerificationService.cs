@@ -5,13 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EstimatorMcp.Web.Services.Auth;
 
-public class VerificationService(AppDbContext db) : IVerificationService
+public class VerificationService(AppDbContext db, ILogger<VerificationService> logger) : IVerificationService
 {
     private static readonly TimeSpan CodeTtl = TimeSpan.FromMinutes(15);
 
     public async Task<string> CreateVerificationAsync(string email)
     {
-        // Remove any existing pending verifications for this email
         var existing = await db.PendingVerifications
             .Where(v => v.Email == email)
             .ToListAsync();
@@ -28,6 +27,7 @@ public class VerificationService(AppDbContext db) : IVerificationService
         });
 
         await db.SaveChangesAsync();
+        logger.LogInformation("Verification code created for {Email}", email);
         return code;
     }
 
@@ -37,11 +37,22 @@ public class VerificationService(AppDbContext db) : IVerificationService
         var verification = await db.PendingVerifications
             .FirstOrDefaultAsync(v => v.Email == email && v.CodeHash == codeHash);
 
-        if (verification is null || verification.ExpiresAt <= DateTime.UtcNow)
+        if (verification is null)
+        {
+            logger.LogWarning("Validation failed for {Email}: no matching record found", email);
             return false;
+        }
+
+        if (verification.ExpiresAt <= DateTime.UtcNow)
+        {
+            logger.LogWarning("Validation failed for {Email}: code expired at {ExpiresAt} (now {Now})",
+                email, verification.ExpiresAt, DateTime.UtcNow);
+            return false;
+        }
 
         db.PendingVerifications.Remove(verification);
         await db.SaveChangesAsync();
+        logger.LogInformation("Validation succeeded for {Email}", email);
         return true;
     }
 

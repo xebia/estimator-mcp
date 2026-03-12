@@ -23,7 +23,11 @@
         <InputText @bind-Value="_model.Code" class="form-control" placeholder="123456" inputmode="numeric" maxlength="6" autocomplete="one-time-code" />
         <ValidationMessage For="() => _model.Code" />
     </div>
-    <button type="submit" class="btn btn-primary" disabled="@_submitting">
+    <button type="submit" class="btn btn-primary" disabled="@(_submitting || !RendererInfo.IsInteractive)">
+        @if (!RendererInfo.IsInteractive)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        }
         @(_submitting ? "Verifying…" : "Verify")
     </button>
     <a href="/auth/register" class="btn btn-link ms-2">Resend code</a>

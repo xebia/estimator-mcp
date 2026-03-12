@@ -22,7 +22,11 @@
         <InputText @bind-Value="_model.Email" class="form-control" placeholder="you@xebia.com" autocomplete="email" />
         <ValidationMessage For="() => _model.Email" />
     </div>
-    <button type="submit" class="btn btn-primary" disabled="@_submitting">
+    <button type="submit" class="btn btn-primary" disabled="@(_submitting || !RendererInfo.IsInteractive)">
+        @if (!RendererInfo.IsInteractive)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        }
         @(_submitting ? "Sending…" : "Send verification code")
     </button>
 </EditForm>

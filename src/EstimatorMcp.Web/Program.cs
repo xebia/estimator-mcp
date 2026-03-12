@@ -6,6 +6,7 @@ using EstimatorMcp.Web.Services;
 using EstimatorMcp.Web.Services.Auth;
 using EstimatorMcp.Web.Tools;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -33,11 +34,21 @@ try
     var builder = WebApplication.CreateBuilder(args);
     builder.Host.UseSerilog();
 
-    // SQLite via EF Core.
-    // unix-none VFS bypasses flock() — required for Azure Files (SMB) which doesn't
-    // support POSIX advisory locks. Safe because maxReplicas is 1 (single writer).
+    // Persist Data Protection keys to the mounted volume so antiforgery tokens
+    // and encrypted cookies survive container restarts.
     var dbPath = builder.Configuration["DatabasePath"] ?? "estimator.db";
-    var connStr = $"Data Source=file:{dbPath}?vfs=unix-none";
+    var dataDir = Path.GetDirectoryName(Path.GetFullPath(dbPath)) ?? ".";
+    var keysDir = Path.Combine(dataDir, "DataProtection-Keys");
+    Directory.CreateDirectory(keysDir);
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(keysDir));
+
+    // SQLite via EF Core.
+    // Vfs=unix-none bypasses flock() — required for Azure Files (SMB) which doesn't
+    // support POSIX advisory locks. Safe because maxReplicas is 1 (single writer).
+    // Pooling=False ensures each DbContext open gets a fresh SQLite handle with no
+    // stale page-cache, which prevents read misses after a write on a different handle.
+    var connStr = $"Data Source=file:{dbPath}?vfs=unix-none;Pooling=False";
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlite(connStr));
 
@@ -87,6 +98,7 @@ try
         app.UseHsts();
     }
 
+    app.UseRequestLocalization("en-US");
     app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
     app.UseHttpsRedirection();
     app.UseStaticFiles();
