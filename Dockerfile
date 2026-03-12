@@ -24,14 +24,9 @@ COPY --chown=app:app \
     src/CatalogEditor/CatalogEditor/CatalogEditor/data/catalogs/ \
     ./data/catalogs/
 
-# Create writable data dir under the app user's home (always writable)
-RUN mkdir -p /home/app/data/logs && chown -R app:app /home/app/data
-
 USER app
 EXPOSE 8080
 
 ENV ASPNETCORE_URLS=http://+:8080
-ENV DatabasePath=/home/app/data/estimator.db
-ENV ESTIMATOR_LOGS_PATH=/home/app/data/logs
 
 ENTRYPOINT ["dotnet", "EstimatorMcp.Web.dll"]

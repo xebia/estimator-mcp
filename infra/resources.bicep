@@ -19,7 +19,7 @@ var emailServiceName     = 'email-${resourceToken}'
 var communicationSvcName = 'acs-${resourceToken}'
 var fileShareName        = 'estimator-data'
 var storageMountName     = 'estimator-data'
-var dataMountPath        = '/home/app/data'
+var dataMountPath        = '/data'
 
 // ── Log Analytics (required by Container Apps) ────────────────────────────────
 
@@ -43,7 +43,10 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' = {
   properties: { adminUserEnabled: true }
 }
 
-// ── Storage (SQLite persistence) ──────────────────────────────────────────────
+// ── Storage — Azure Files (SMB) for SQLite persistence ────────────────────────
+// Azure Files SMB doesn't support POSIX flock(), which SQLite normally uses.
+// The app uses SQLite's built-in unix-none VFS (see Program.cs) to bypass file
+// locking entirely — safe because maxReplicas is 1 (single writer guaranteed).
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
@@ -89,7 +92,6 @@ resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
-// Link Azure Files share into the Container Apps Environment
 resource storageMount 'Microsoft.App/managedEnvironments/storages@2024-03-01' = {
   name: storageMountName
   parent: containerAppsEnv
@@ -114,8 +116,6 @@ resource emailService 'Microsoft.Communication/emailServices@2023-04-01' = {
   }
 }
 
-// Azure-managed domain: provisions instantly, no DNS verification required.
-// Name must be exactly 'AzureManagedDomain' — this is an Azure convention.
 resource emailDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' = {
   name: 'AzureManagedDomain'
   parent: emailService
@@ -169,33 +169,43 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       ]
     }
     template: {
-      // NOTE: SQLite on Azure Files (SMB) fails due to missing POSIX advisory lock support.
-      // Data is stored on the container's local filesystem for now (ephemeral).
-      // TODO: migrate to Azure Files NFS (Premium storage + VNet) or a cloud database.
+      volumes: [
+        {
+          name: storageMountName
+          storageType: 'AzureFile'
+          storageName: storageMountName
+        }
+      ]
       containers: [
         {
           name: 'estimator-mcp'
-          // azd replaces this image reference on first deploy
           image: 'mcr.microsoft.com/dotnet/samples:aspnetapp'
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
           }
           env: [
-            { name: 'ASPNETCORE_URLS',                value: 'http://+:8080' }
-            { name: 'DatabasePath',                   value: '${dataMountPath}/estimator.db' }
-            { name: 'ESTIMATOR_LOGS_PATH',            value: '${dataMountPath}/logs' }
+            { name: 'ASPNETCORE_URLS',                     value: 'http://+:8080' }
+            { name: 'DatabasePath',                        value: '${dataMountPath}/estimator.db' }
+            { name: 'ESTIMATOR_LOGS_PATH',                 value: '${dataMountPath}/logs' }
             { name: 'AzureEmailService__ConnectionString', secretRef: 'acs-connection-string' }
-            { name: 'AzureEmailService__SenderAddress',   value: acsSenderAddress }
+            { name: 'AzureEmailService__SenderAddress',    value: acsSenderAddress }
+          ]
+          volumeMounts: [
+            {
+              volumeName: storageMountName
+              mountPath: dataMountPath
+            }
           ]
         }
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 1
+        maxReplicas: 1  // single writer — required for unix-none VFS safety
       }
     }
   }
+  dependsOn: [storageMount]
 }
 
 // ── Outputs ───────────────────────────────────────────────────────────────────
