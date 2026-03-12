@@ -1,0 +1,103 @@
+@page "/account/verify"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using EstimatorMcp.Web.Services.Auth
+@using Microsoft.Extensions.Options
+@inject IVerificationService VerificationService
+@inject PendingSignInService PendingSignIn
+@inject IOptions<AzureEmailOptions> EmailOptions
+@inject ILogger<Verify> Logger
+@inject NavigationManager Nav
+
+<PageTitle>Enter Code — Estimator MCP</PageTitle>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-sm" style="width: 420px;">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <h4 class="fw-bold">Check Your Email</h4>
+                <p class="text-muted small">
+                    We sent a 6-digit code to <strong>@Email</strong>.
+                    Enter it below to sign in.
+                </p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger">@_error</div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="VerifyCode" FormName="verify">
+                <DataAnnotationsValidator />
+                <div class="mb-3">
+                    <label class="form-label" for="code">6-digit code</label>
+                    <InputText id="code" @bind-Value="_model.Code" class="form-control text-center fs-4"
+                               autocomplete="one-time-code" inputmode="numeric" maxlength="6"
+                               placeholder="······" disabled="@_submitting" />
+                    <ValidationMessage For="() => _model.Code" class="text-danger small" />
+                </div>
+                <button type="submit" class="btn btn-primary w-100"
+                        disabled="@(_submitting || !RendererInfo.IsInteractive)">
+                    @if (!RendererInfo.IsInteractive)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    @(_submitting ? "Verifying…" : "Sign In")
+                </button>
+            </EditForm>
+
+            <div class="alert alert-light mt-3 small">
+                <strong>Didn't get the email?</strong> Check your spam folder.
+                @if (!string.IsNullOrEmpty(EmailOptions.Value.SenderAddress))
+                {
+                    <span> The email will come from <code>@EmailOptions.Value.SenderAddress</code>.</span>
+                }
+                <br />
+                <a href="/account/login">Send a new code</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly VerifyModel _model = new();
+    private string? _error;
+    private bool _submitting;
+
+    [SupplyParameterFromQuery]
+    public string? Email { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    private async Task VerifyCode()
+    {
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            Nav.NavigateTo("/account/login");
+            return;
+        }
+
+        _error = null;
+        _submitting = true;
+
+        var valid = await VerificationService.ValidateCodeAsync(Email, _model.Code.Trim());
+        if (!valid)
+        {
+            _error = "Invalid or expired code. Please try again or request a new one.";
+            _submitting = false;
+            return;
+        }
+
+        Logger.LogInformation("Verification succeeded for {Email}, issuing session", Email);
+        var ticket = PendingSignIn.Create(Email, ReturnUrl);
+        Nav.NavigateTo($"/account/do-signin?ticket={Uri.EscapeDataString(ticket)}", forceLoad: true);
+    }
+
+    private sealed class VerifyModel
+    {
+        [Required]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Enter the 6-digit code.")]
+        public string Code { get; set; } = "";
+    }
+}

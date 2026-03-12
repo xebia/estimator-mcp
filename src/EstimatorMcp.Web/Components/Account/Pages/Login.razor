@@ -1,0 +1,88 @@
+@page "/account/login"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using EstimatorMcp.Web.Services.Auth
+@inject IVerificationService VerificationService
+@inject IEmailService EmailService
+@inject ILogger<Login> Logger
+@inject NavigationManager Nav
+
+<PageTitle>Sign In — Estimator MCP</PageTitle>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow-sm" style="width: 420px;">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <h4 class="fw-bold">Sign In</h4>
+                <p class="text-muted small">Enter your xebia.com email to receive a sign-in code</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger">@_error</div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="SendCode" FormName="login">
+                <DataAnnotationsValidator />
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email</label>
+                    <InputText id="email" @bind-Value="_model.Email" class="form-control"
+                               autocomplete="username" placeholder="you@xebia.com"
+                               disabled="@_submitting" />
+                    <ValidationMessage For="() => _model.Email" class="text-danger small" />
+                </div>
+                <button type="submit" class="btn btn-primary w-100"
+                        disabled="@(_submitting || !RendererInfo.IsInteractive)">
+                    @if (!RendererInfo.IsInteractive)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    @(_submitting ? "Sending…" : "Send Code")
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly LoginModel _model = new();
+    private string? _error;
+    private bool _submitting;
+
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    private async Task SendCode()
+    {
+        _error = null;
+        var email = _model.Email.Trim().ToLowerInvariant();
+
+        if (!email.EndsWith("@xebia.com", StringComparison.OrdinalIgnoreCase))
+        {
+            _error = "Only xebia.com email addresses are allowed.";
+            return;
+        }
+
+        _submitting = true;
+        try
+        {
+            var code = await VerificationService.CreateVerificationAsync(email);
+            await EmailService.SendVerificationCodeAsync(email, code);
+            var returnParam = ReturnUrl is not null ? $"&returnUrl={Uri.EscapeDataString(ReturnUrl)}" : "";
+            Nav.NavigateTo($"/account/verify?email={Uri.EscapeDataString(email)}{returnParam}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to send verification code to {Email}", email);
+            _error = "Failed to send the code. Please try again.";
+            _submitting = false;
+        }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+    }
+}

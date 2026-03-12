@@ -14,28 +14,32 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="techstacks">
-                <span class="bi bi-stack" aria-hidden="true"></span> Tech Stacks
-            </NavLink>
-        </div>
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="techstacks">
+                        <span class="bi bi-stack" aria-hidden="true"></span> Tech Stacks
+                    </NavLink>
+                </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="roles">
-                <span class="bi bi-people-fill" aria-hidden="true"></span> Roles
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="roles">
+                        <span class="bi bi-people-fill" aria-hidden="true"></span> Roles
+                    </NavLink>
+                </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="catalog">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Catalog
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="catalog">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Catalog
+                    </NavLink>
+                </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth/register">
-                <span class="bi bi-key-fill" aria-hidden="true"></span> Get API Token
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="auth/register">
+                        <span class="bi bi-key-fill" aria-hidden="true"></span> Get API Token
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
     </nav>
 </div>

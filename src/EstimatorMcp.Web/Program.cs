@@ -5,7 +5,10 @@ using EstimatorMcp.Web.Data;
 using EstimatorMcp.Web.Services;
 using EstimatorMcp.Web.Services.Auth;
 using EstimatorMcp.Web.Tools;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -62,10 +65,25 @@ try
     builder.Services.AddScoped<ITokenService, TokenService>();
     builder.Services.AddSingleton<TokenDisplayService>();
 
-    // Bearer token authentication for MCP endpoint
-    builder.Services.AddAuthentication(BearerTokenAuthHandler.SchemeName)
+    // Cookie auth for web session (7-day hard expiry) + Bearer auth for /mcp
+    builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+        {
+            options.LoginPath = "/account/login";
+            options.AccessDeniedPath = "/account/login";
+            options.ExpireTimeSpan = TimeSpan.FromDays(7);
+            options.SlidingExpiration = false;
+        })
         .AddScheme<AuthenticationSchemeOptions, BearerTokenAuthHandler>(BearerTokenAuthHandler.SchemeName, null);
-    builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("Bearer", policy => policy
+            .AddAuthenticationSchemes(BearerTokenAuthHandler.SchemeName)
+            .RequireAuthenticatedUser());
+    });
+
+    builder.Services.AddSingleton<PendingSignInService>();
+    builder.Services.AddCascadingAuthenticationState();
 
     // Blazor
     builder.Services.AddRazorComponents()
@@ -106,8 +124,38 @@ try
     app.UseAuthorization();
     app.UseAntiforgery();
 
+    // Sign-in: exchanges a one-time ticket (from Interactive Server verify component) for a session cookie
+    app.MapGet("/account/do-signin", async (
+        string ticket,
+        HttpContext httpContext,
+        PendingSignInService pendingSignIn) =>
+    {
+        if (!pendingSignIn.TryConsume(ticket, out var email, out var returnUrl))
+            return Results.Redirect("/account/login");
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, email),
+            new(ClaimTypes.Email, email),
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await httpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity),
+            new AuthenticationProperties { IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7) });
+
+        return Results.Redirect(returnUrl is not null ? Uri.UnescapeDataString(returnUrl) : "/");
+    });
+
+    // Logout
+    app.MapPost("/account/logout", async (HttpContext httpContext) =>
+    {
+        await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Results.Redirect("/");
+    }).DisableAntiforgery();
+
     // MCP endpoint (HTTP/Streamable) — requires Bearer token
-    app.MapMcp("/mcp").RequireAuthorization();
+    app.MapMcp("/mcp").RequireAuthorization("Bearer");
 
     // REST API
     app.MapCatalogApi();
