@@ -37,7 +37,7 @@ try
     // unix-none VFS bypasses flock() — required for Azure Files (SMB) which doesn't
     // support POSIX advisory locks. Safe because maxReplicas is 1 (single writer).
     var dbPath = builder.Configuration["DatabasePath"] ?? "estimator.db";
-    var connStr = $"Data Source=file:{Uri.EscapeDataString(dbPath)}?vfs=unix-none&mode=rwc";
+    var connStr = $"Data Source=file:{dbPath}?vfs=unix-none";
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlite(connStr));
 
