@@ -49,9 +49,12 @@ try
     // SQLite via EF Core.
     // Vfs=unix-none bypasses flock() — required for Azure Files (SMB) which doesn't
     // support POSIX advisory locks. Safe because maxReplicas is 1 (single writer).
+    // Only applied on Linux; Windows native sqlite has no equivalent vfs and rejects it.
     // Pooling=False ensures each DbContext open gets a fresh SQLite handle with no
     // stale page-cache, which prevents read misses after a write on a different handle.
-    var connStr = $"Data Source=file:{dbPath}?vfs=unix-none;Pooling=False";
+    var connStr = OperatingSystem.IsLinux()
+        ? $"Data Source=file:{dbPath}?vfs=unix-none;Pooling=False"
+        : $"Data Source={dbPath};Pooling=False";
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlite(connStr));
 
