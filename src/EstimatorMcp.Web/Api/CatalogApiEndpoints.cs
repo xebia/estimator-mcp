@@ -14,7 +14,7 @@ public static class CatalogApiEndpoints
 
     public static void MapCatalogApi(this WebApplication app)
     {
-        var group = app.MapGroup("/api/catalog").RequireAuthorization();
+        var group = app.MapGroup("/api/catalog").RequireAuthorization("BearerOnly");
 
         // GET /api/catalog/export — full catalog as JSON
         group.MapGet("/export", async (ICatalogDataProvider provider) =>

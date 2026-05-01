@@ -91,15 +91,38 @@ Goal: signing in to the Blazor UI redirects to Xebia, comes back, and shows the 
 - [ ] On the Xebia app registration → Certificates & secrets → Federated credentials → confirm the credential pointing at the Marimer MI is present (this was already done with Troy, just verify).
 
 **Code (Claude):**
-- [ ] In `Program.cs`, register Microsoft.Identity.Web with `AddMicrosoftIdentityWebApp`, configured for single-tenant with `ClientCredentials = SignedAssertionFromManagedIdentity` (Marimer MI client ID).
-- [ ] Add `AddMicrosoftIdentityUI()` to Razor Components for sign-in/sign-out endpoints.
-- [ ] Add a sign-in / sign-out / "signed in as" affordance to the Blazor layout.
-- [ ] Keep the old `BearerTokenAuthHandler` registered so `/mcp` and `/api/catalog` still work.
-- [ ] Build passes; manual smoke test: `dotnet run`, browse to `https://localhost:5001`, sign in with a Xebia account, see the email surface in the UI.
+- [x] In `Program.cs`, register Microsoft.Identity.Web with `AddMicrosoftIdentityWebApp`, configured for single-tenant. Reads `ClientCredentials` (federated MI assertion) from `AzureAd` config section.
+- [x] Add `AddMicrosoftIdentityUI()` (via `AddControllersWithViews`) and `app.MapControllers()` so `/MicrosoftIdentity/Account/SignIn` and `/SignOut` routes work.
+- [x] Add `<AuthorizeView>` to `MainLayout.razor` showing sign-in link / "Signed in as ..." with sign-out link. Add `Microsoft.AspNetCore.Components.Authorization` to `_Imports.razor`.
+- [x] Add `BearerOnly` authorization policy and pin `/mcp` + `/api/catalog/*` to it so unauthenticated MCP/REST callers get 401, not an OIDC redirect.
+- [x] Old `BearerTokenAuthHandler` still registered (parallel scheme). Old auth Razor pages still in place.
+- [x] Build passes (`dotnet build`).
+- [ ] ~~Manual smoke test~~ — Claude can't drive a browser; left for Rocky.
 - [ ] Commit: `feat(auth): Blazor UI signs in via Xebia Entra (OIDC + federated MI)`.
 
+**Heads-up — local dev needs an extra step:**
+`SignedAssertionFromManagedIdentity` requires running on an Azure resource with the MI assigned. To smoke-test locally, the recommended path is a temporary client secret stored in user secrets (never committed), which overrides `AzureAd:ClientCredentials` for local runs only. See "Local-dev secret setup" below.
+
 **You (Rocky):**
+- [ ] **Decide:** smoke test locally with a temporary client secret OR skip local test and validate after Phase 4 deploy?
 - [ ] Smoke test: sign in, sign out, sign in again. Confirm it works.
+
+### Local-dev secret setup (only if testing locally)
+
+If you choose to test locally:
+
+1. On the Xebia app registration → Certificates & secrets → "Client secrets" → "New client secret" — give it a short expiry (90 days). Copy the secret **value** immediately (it disappears after this view).
+2. From the repo root, store it in user secrets so it never enters source control:
+   ```powershell
+   cd src/EstimatorMcp.Web
+   dotnet user-secrets set "AzureAd:ClientCredentials:0:SourceType" "ClientSecret"
+   dotnet user-secrets set "AzureAd:ClientCredentials:0:ClientSecret" "<paste-the-secret-value>"
+   ```
+   Setting index 0 of `ClientCredentials` overrides the production MI entry only for this dev environment. Microsoft.Identity.Web reads from environment + user-secrets + appsettings in that order.
+3. Confirm with `dotnet user-secrets list`. Run `dotnet run --urls=https://localhost:5001` and try signing in.
+4. (When done) Delete the client secret on the Xebia app registration; remove the user-secrets entries with `dotnet user-secrets remove`.
+
+> Note: there's an unrelated pre-existing issue running locally on Windows native — the SQLite connection string uses `vfs=unix-none` which is Linux-only. If you hit this, the workaround is WSL or running in Docker. Not introduced by Phase 2.
 
 ---
 
