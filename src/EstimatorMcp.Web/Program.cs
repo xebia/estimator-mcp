@@ -6,6 +6,7 @@ using EstimatorMcp.Web.Services;
 using EstimatorMcp.Web.Services.Auth;
 using EstimatorMcp.Web.Tools;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -79,13 +80,24 @@ try
     builder.Services.AddAuthentication()
         .AddScheme<AuthenticationSchemeOptions, BearerTokenAuthHandler>(BearerTokenAuthHandler.SchemeName, null);
 
+    // JwtBearer for Entra-issued JWTs (Copilot Studio, az CLI tokens, etc.). Reads the
+    // same AzureAd config section; Authority/Audience derived from TenantId/ClientId.
+    builder.Services.AddAuthentication()
+        .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+
     builder.Services.AddAuthorization(options =>
     {
-        // Bearer-only policy for /mcp and /api/catalog: explicitly pins the scheme so
-        // unauthenticated clients get 401, not a 302 redirect to Xebia sign-in.
+        // Token-only policy for /mcp and /api/catalog: accepts EITHER an Entra JWT
+        // (new flow) OR a legacy opaque token (transitional, removed in Phase 5).
+        // Either scheme that succeeds satisfies the policy. Pinning these schemes
+        // also stops unauthenticated callers from being 302'd to Xebia sign-in.
         options.AddPolicy("BearerOnly", policy =>
         {
-            policy.AuthenticationSchemes = [BearerTokenAuthHandler.SchemeName];
+            policy.AuthenticationSchemes =
+            [
+                JwtBearerDefaults.AuthenticationScheme,
+                BearerTokenAuthHandler.SchemeName,
+            ];
             policy.RequireAuthenticatedUser();
         });
     });
@@ -136,6 +148,37 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseAntiforgery();
+
+    // Per the MCP spec (RFC 9728), unauthenticated requests to a protected MCP endpoint
+    // must include a WWW-Authenticate header with resource_metadata pointing at the
+    // OAuth Protected Resource Metadata document. This middleware overrides any
+    // WWW-Authenticate already set by the auth handlers when the response is 401 on /mcp.
+    app.Use(async (ctx, next) =>
+    {
+        await next();
+        if (!ctx.Response.HasStarted
+            && ctx.Response.StatusCode == 401
+            && ctx.Request.Path.StartsWithSegments("/mcp"))
+        {
+            var prmUrl = $"{ctx.Request.Scheme}://{ctx.Request.Host}/.well-known/oauth-protected-resource/mcp";
+            ctx.Response.Headers.WWWAuthenticate = $"Bearer resource_metadata=\"{prmUrl}\"";
+        }
+    });
+
+    // OAuth Protected Resource Metadata for the /mcp resource (RFC 9728). Anonymous —
+    // it advertises the authorization server (Xebia Entra) and the scope required to call /mcp.
+    app.MapGet("/.well-known/oauth-protected-resource/mcp", (HttpRequest req, IConfiguration cfg) =>
+    {
+        var tenantId = cfg["AzureAd:TenantId"];
+        var clientId = cfg["AzureAd:ClientId"];
+        return Results.Json(new
+        {
+            resource = $"{req.Scheme}://{req.Host}/mcp",
+            authorization_servers = new[] { $"https://login.microsoftonline.com/{tenantId}/v2.0" },
+            scopes_supported = new[] { $"api://{clientId}/access_as_user" },
+            bearer_methods_supported = new[] { "header" },
+        });
+    }).AllowAnonymous();
 
     // MCP endpoint — Bearer token only (no OIDC redirects)
     app.MapMcp("/mcp").RequireAuthorization("BearerOnly");

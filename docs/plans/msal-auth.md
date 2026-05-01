@@ -104,8 +104,8 @@ Goal: signing in to the Blazor UI redirects to Xebia, comes back, and shows the 
 `SignedAssertionFromManagedIdentity` requires running on an Azure resource with the MI assigned. To smoke-test locally, the recommended path is a temporary client secret stored in user secrets (never committed), which overrides `AzureAd:ClientCredentials` for local runs only. See "Local-dev secret setup" below.
 
 **You (Rocky):**
-- [ ] **Decide:** smoke test locally with a temporary client secret OR skip local test and validate after Phase 4 deploy?
-- [ ] Smoke test: sign in, sign out, sign in again. Confirm it works.
+- [x] **Decide:** smoke test locally with a temporary client secret OR skip local test and validate after Phase 4 deploy? — chose local with secret in user secrets.
+- [x] Smoke test: sign in, sign out, sign in again. Confirmed working — token endpoint returned 200, UI shows signed-in user.
 
 ### Local-dev secret setup (only if testing locally)
 
@@ -131,14 +131,9 @@ If you choose to test locally:
 Goal: MCP and REST API accept Entra-issued JWTs. The MCP endpoint advertises Xebia as its authorization server per RFC 9728 so Copilot Studio can discover it. Old Bearer token still accepted in parallel until Phase 5 (gives us a fallback during testing).
 
 **Code (Claude):**
-- [ ] Register a JwtBearer scheme alongside the cookie/OIDC scheme:
-  - Authority = `https://login.microsoftonline.com/{xebia-tenant-id}/v2.0`
-  - Audience = `api://{client-id}` (or just `{client-id}` — both are commonly accepted)
-  - Token validation parameters: validate issuer, audience, signature, lifetime.
-- [ ] Compose authentication policies so:
-  - Blazor pages → cookie scheme.
-  - `/mcp` and `/api/catalog/*` → JwtBearer scheme **and** existing BearerToken scheme during transition.
-- [ ] Map a `/.well-known/oauth-protected-resource` endpoint that returns:
+- [x] Register JwtBearer via `AddMicrosoftIdentityWebApi(GetSection("AzureAd"))`. Authority/Audience derived from `TenantId` + new `Audience` field set to `api://{clientId}`. Standard MSAL token validation (issuer, audience, signature, lifetime).
+- [x] `BearerOnly` policy now lists both `JwtBearer` and `BearerToken` schemes; either one succeeding satisfies the policy. The legacy scheme will be removed in Phase 5.
+- [x] Map `GET /.well-known/oauth-protected-resource/mcp` (anonymous) returning:
   ```json
   {
     "resource": "https://{host}/mcp",
@@ -147,16 +142,29 @@ Goal: MCP and REST API accept Entra-issued JWTs. The MCP endpoint advertises Xeb
     "bearer_methods_supported": ["header"]
   }
   ```
-- [ ] Make `MapMcp("/mcp")` send a `WWW-Authenticate: Bearer resource_metadata="..."` header on 401 (per the MCP spec) so clients know where to find the PRM document.
-- [ ] Build passes; manual smoke test:
-  - `az account get-access-token --resource api://{client-id} --tenant {xebia-tenant-id}` → grab a JWT.
-  - `curl -H "Authorization: Bearer <jwt>" https://localhost:5001/api/catalog/export` → 200.
-  - Same JWT against `/mcp` via MCP Inspector → tools list.
+- [x] Tail-end middleware sets `WWW-Authenticate: Bearer resource_metadata="..."` on 401 responses to `/mcp/*`, overwriting whatever the auth handlers set.
+- [x] Build passes (`dotnet build`).
+- [ ] Manual smoke test left to Rocky (commands below).
 - [ ] Commit: `feat(auth): JWT bearer + PRM discovery on /mcp and /api/catalog`.
 
 **You (Rocky):**
-- [ ] Run the `az account get-access-token` smoke test and confirm a 200.
-- [ ] (Optional) MCP Inspector dry-run.
+- [ ] Verify the PRM document:
+  ```powershell
+  curl -k https://localhost:5001/.well-known/oauth-protected-resource/mcp
+  ```
+  Should return a JSON document with `resource`, `authorization_servers`, `scopes_supported`.
+- [ ] Verify the WWW-Authenticate header on an unauthenticated /mcp request:
+  ```powershell
+  curl -k -i https://localhost:5001/mcp
+  ```
+  Status `401`, header `WWW-Authenticate: Bearer resource_metadata="https://localhost:5001/.well-known/oauth-protected-resource/mcp"`.
+- [ ] Get a JWT via `az` and call the REST API:
+  ```powershell
+  $token = (az account get-access-token --resource api://32c976ae-e874-4126-b2d8-10bc99ae9330 --tenant 3d4d17ea-1ae4-4705-947e-51369c5a5f79 | ConvertFrom-Json).accessToken
+  curl -k -H "Authorization: Bearer $token" https://localhost:5001/api/catalog/export
+  ```
+  Should return the catalog JSON. (You may need `az login --tenant 3d4d17ea-1ae4-4705-947e-51369c5a5f79` first if your default `az` context is a different tenant.)
+- [ ] (Optional) MCP Inspector dry-run pointed at `https://localhost:5001/mcp` with the OAuth scope `api://32c976ae-e874-4126-b2d8-10bc99ae9330/access_as_user`.
 
 ---
 
