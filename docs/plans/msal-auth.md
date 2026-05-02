@@ -165,13 +165,21 @@ Goal: MCP and REST API accept Entra-issued JWTs. The MCP endpoint advertises Xeb
 Goal: a real Copilot Studio agent in Xebia M365 calls `/mcp` successfully. This is the validation that the OAuth wiring is right end-to-end. Mostly your work — Claude is on standby for issues.
 
 **You (Rocky):**
-- [ ] Deploy the Phase 3 build to the Container App (so Copilot Studio can reach a public URL).
-- [ ] Add `https://{fqdn}/signin-oidc` to the Xebia app registration redirect URIs.
-- [ ] In Copilot Studio: register the MCP server, point it at `https://{fqdn}/mcp`, supply the OAuth scope `api://{client-id}/access_as_user`.
+- [x] Deploy the Phase 3 build to the Container App (`azd up` after setting Bicep params via `azd env config set`).
+- [x] Add `https://{fqdn}/signin-oidc` to the Xebia app registration redirect URIs.
+- [x] Browser sign-in test against the deployed URL — confirmed working (logs show 200 on token endpoint, no exceptions).
+- [ ] In Copilot Studio: register the MCP server, point it at `https://ca-xsludqqyumyme.prouddesert-77f66edd.centralus.azurecontainerapps.io/mcp`, supply the OAuth scope `api://32c976ae-e874-4126-b2d8-10bc99ae9330/access_as_user`.
 - [ ] Trigger a tool call from the agent. Confirm 200s in the app logs.
 
-**Code (Claude), only if issues surface:**
-- [ ] Diagnose any 401s / discovery problems from logs and adjust configuration. Common things to check: PRM `resource` exact-match, scope name, Application ID URI consistency, audience format, redirect URI exact-match.
+**Code (Claude), already addressed during Phase 4 deploy:**
+- [x] `UseForwardedHeaders` middleware so PRM `resource` and OIDC redirect URLs are emitted as `https://` (Container Apps' ingress terminates TLS).
+- [x] Restricted `UseStatusCodePagesWithReExecute` to non-API paths so /mcp 401s have empty bodies (not the Blazor index HTML).
+- [x] Bicep updated to attach the user-assigned MI to the Container App and to support an optional `xebiaAppClientSecret` for the secret-fallback path.
+
+**Open issue — FIC blocked, secret fallback in use:**
+The federated managed-identity flow that Troy walked through fails with **AADSTS700236**: *"Entra ID tokens issued by issuer `…/da478866-…/v2.0` may not be used for federated identity credential flows for applications or managed identities registered in this tenant."* The Xebia tenant has a cross-tenant access policy blocking inbound workload identity federation from external Entra tenants. Until that's resolved (Xebia admin work via Entra → External Identities → Cross-tenant access settings), the deployed app uses a client secret stored as the `azure-ad-client-secret` Container App secret, with env vars overriding `AzureAd:ClientCredentials[0]:SourceType` → `ClientSecret`. The MI assignment stays attached so re-enabling FIC later requires only unsetting the env vars.
+
+- [ ] (Future) Get Troy / Xebia admin to allow inbound workload identity federation from Marimer tenant `da478866-394f-4ef4-8257-b720d51eaade`. Then `azd env config unset infra.parameters.xebiaAppClientSecret` + `azd up` switches back to FIC.
 
 ---
 
