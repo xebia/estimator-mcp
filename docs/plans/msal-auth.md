@@ -142,29 +142,21 @@ Goal: MCP and REST API accept Entra-issued JWTs. The MCP endpoint advertises Xeb
     "bearer_methods_supported": ["header"]
   }
   ```
-- [x] Tail-end middleware sets `WWW-Authenticate: Bearer resource_metadata="..."` on 401 responses to `/mcp/*`, overwriting whatever the auth handlers set.
+- [x] Middleware sets `WWW-Authenticate: Bearer resource_metadata="..."` on 401 responses to `/mcp/*`. Must wrap the auth pipeline (registered before `UseAuthentication`) so the unwind path runs through it after authz short-circuits with 401.
 - [x] Build passes (`dotnet build`).
-- [ ] Manual smoke test left to Rocky (commands below).
-- [ ] Commit: `feat(auth): JWT bearer + PRM discovery on /mcp and /api/catalog`.
+- [x] All three smoke tests pass — PRM document correct, WWW-Authenticate header points at PRM doc on unauth /mcp, JWT-protected REST returns 200 with valid Entra token.
+- [x] Commit: `feat(auth): JWT bearer + PRM discovery on /mcp and /api/catalog` (followed by middleware-order fix commit).
 
 **You (Rocky):**
-- [ ] Verify the PRM document:
+- [x] Pre-authorize Azure CLI (`04b07795-8ddb-461a-bbee-02f9e1bf7b46`) for the `access_as_user` scope on the Xebia app registration's "Expose an API" → "Authorized client applications" blade. Required for `az` to acquire tokens against this resource without interactive consent prompts.
+- [x] Verify the PRM document:
   ```powershell
   curl -k https://localhost:5001/.well-known/oauth-protected-resource/mcp
   ```
   Should return a JSON document with `resource`, `authorization_servers`, `scopes_supported`.
-- [ ] Verify the WWW-Authenticate header on an unauthenticated /mcp request:
-  ```powershell
-  curl -k -i https://localhost:5001/mcp
-  ```
-  Status `401`, header `WWW-Authenticate: Bearer resource_metadata="https://localhost:5001/.well-known/oauth-protected-resource/mcp"`.
-- [ ] Get a JWT via `az` and call the REST API:
-  ```powershell
-  $token = (az account get-access-token --resource api://32c976ae-e874-4126-b2d8-10bc99ae9330 --tenant 3d4d17ea-1ae4-4705-947e-51369c5a5f79 | ConvertFrom-Json).accessToken
-  curl -k -H "Authorization: Bearer $token" https://localhost:5001/api/catalog/export
-  ```
-  Should return the catalog JSON. (You may need `az login --tenant 3d4d17ea-1ae4-4705-947e-51369c5a5f79` first if your default `az` context is a different tenant.)
-- [ ] (Optional) MCP Inspector dry-run pointed at `https://localhost:5001/mcp` with the OAuth scope `api://32c976ae-e874-4126-b2d8-10bc99ae9330/access_as_user`.
+- [x] Verify the WWW-Authenticate header on an unauthenticated /mcp request — PASS (`Bearer resource_metadata="https://localhost:5001/.well-known/oauth-protected-resource/mcp"`).
+- [x] Get a JWT via `az` and call the REST API — PASS (200, full catalog returned, token validated with aud `api://32c976ae-...`, iss `sts.windows.net/3d4d17ea-.../`, scp `access_as_user`, upn `Rocky.Lhotka@xebia.com`).
+- [ ] (Optional) MCP Inspector dry-run pointed at `https://localhost:5001/mcp` with the OAuth scope `api://32c976ae-e874-4126-b2d8-10bc99ae9330/access_as_user`. Skipped — Phase 4 deploy + real Copilot Studio call is the more meaningful validation.
 
 ---
 

@@ -145,14 +145,13 @@ try
     app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
     app.UseHttpsRedirection();
     app.UseStaticFiles();
-    app.UseAuthentication();
-    app.UseAuthorization();
-    app.UseAntiforgery();
 
     // Per the MCP spec (RFC 9728), unauthenticated requests to a protected MCP endpoint
     // must include a WWW-Authenticate header with resource_metadata pointing at the
-    // OAuth Protected Resource Metadata document. This middleware overrides any
-    // WWW-Authenticate already set by the auth handlers when the response is 401 on /mcp.
+    // OAuth Protected Resource Metadata document. This middleware must wrap the auth
+    // pipeline (registered before UseAuthentication) so that when the authorization
+    // middleware short-circuits with 401 the unwind path still runs through here and
+    // can overwrite the WWW-Authenticate set by the inner challenge handlers.
     app.Use(async (ctx, next) =>
     {
         await next();
@@ -164,6 +163,10 @@ try
             ctx.Response.Headers.WWWAuthenticate = $"Bearer resource_metadata=\"{prmUrl}\"";
         }
     });
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.UseAntiforgery();
 
     // OAuth Protected Resource Metadata for the /mcp resource (RFC 9728). Anonymous —
     // it advertises the authorization server (Xebia Entra) and the scope required to call /mcp.
