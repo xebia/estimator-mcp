@@ -9,3 +9,10 @@ param location       = readEnvironmentVariable('AZURE_LOCATION', 'westeurope')
 // Empty string makes Bicep validation fail rather than silently strip the MI from the
 // Container App.
 param userAssignedIdentityResourceId = readEnvironmentVariable('USER_ASSIGNED_IDENTITY_RESOURCE_ID')
+
+// Optional fallback — set via:
+//   azd env set XEBIA_APP_CLIENT_SECRET "<value-from-Xebia-app-registration>"
+// When non-empty, the deployed Container App overrides AzureAd:ClientCredentials[0] from
+// appsettings.json to use this client secret instead of the federated MI assertion.
+// Used while AADSTS700236 (cross-tenant FIC blocked) is unresolved.
+param xebiaAppClientSecret = readEnvironmentVariable('XEBIA_APP_CLIENT_SECRET', '')

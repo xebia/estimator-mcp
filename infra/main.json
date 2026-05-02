@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "14298835994360038678"
+      "templateHash": "700691623313804265"
     }
   },
   "parameters": {
@@ -29,6 +29,12 @@
       "minLength": 1,
       "metadata": {
         "description": "Full ARM resource ID of the user-assigned managed identity attached to the Container App. The MI typically lives in a different resource group (and may be in a different subscription) from the app itself; the federated credential trusting it is configured on the Xebia app registration. Microsoft.Identity.Web uses this MI for SignedAssertionFromManagedIdentity, exchanging an MI token for a confidential-client assertion against Xebia Entra."
+      }
+    },
+    "xebiaAppClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client secret for the Xebia app registration, used as a fallback when the federated managed-identity flow is blocked by the Xebia tenant's cross-tenant access policy (AADSTS700236). When set, the app overrides AzureAd:ClientCredentials[0] from appsettings.json to use this secret instead of the federated MI assertion. Empty string disables the override and the app falls back to the appsettings.json default."
       }
     }
   },
@@ -67,6 +73,9 @@
           },
           "userAssignedIdentityResourceId": {
             "value": "[parameters('userAssignedIdentityResourceId')]"
+          },
+          "xebiaAppClientSecret": {
+            "value": "[parameters('xebiaAppClientSecret')]"
           }
         },
         "template": {
@@ -76,7 +85,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.42.1.51946",
-              "templateHash": "3972529687360580075"
+              "templateHash": "3440287187378335917"
             }
           },
           "parameters": {
@@ -99,6 +108,12 @@
               "type": "string",
               "metadata": {
                 "description": "Full ARM resource ID of the pre-existing user-assigned managed identity to attach to the Container App. See main.bicep for context on how this MI is used."
+              }
+            },
+            "xebiaAppClientSecret": {
+              "type": "securestring",
+              "metadata": {
+                "description": "Optional client secret for the Xebia app registration. See main.bicep. Empty string disables the override."
               }
             }
           },
@@ -281,16 +296,7 @@
                       "passwordSecretRef": "acr-password"
                     }
                   ],
-                  "secrets": [
-                    {
-                      "name": "acr-password",
-                      "value": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName')), '2023-11-01-preview').passwords[0].value]"
-                    },
-                    {
-                      "name": "acs-connection-string",
-                      "value": "[listKeys(resourceId('Microsoft.Communication/communicationServices', variables('communicationSvcName')), '2023-04-01').primaryConnectionString]"
-                    }
-                  ]
+                  "secrets": "[concat(createArray(createObject('name', 'acr-password', 'value', listCredentials(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName')), '2023-11-01-preview').passwords[0].value), createObject('name', 'acs-connection-string', 'value', listKeys(resourceId('Microsoft.Communication/communicationServices', variables('communicationSvcName')), '2023-04-01').primaryConnectionString)), if(empty(parameters('xebiaAppClientSecret')), createArray(), createArray(createObject('name', 'azure-ad-client-secret', 'value', parameters('xebiaAppClientSecret')))))]"
                 },
                 "template": {
                   "volumes": [
@@ -308,28 +314,7 @@
                         "cpu": "[json('0.5')]",
                         "memory": "1Gi"
                       },
-                      "env": [
-                        {
-                          "name": "ASPNETCORE_URLS",
-                          "value": "http://+:8080"
-                        },
-                        {
-                          "name": "DatabasePath",
-                          "value": "[format('{0}/estimator.db', variables('dataMountPath'))]"
-                        },
-                        {
-                          "name": "ESTIMATOR_LOGS_PATH",
-                          "value": "[format('{0}/logs', variables('dataMountPath'))]"
-                        },
-                        {
-                          "name": "AzureEmailService__ConnectionString",
-                          "secretRef": "acs-connection-string"
-                        },
-                        {
-                          "name": "AzureEmailService__SenderAddress",
-                          "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', variables('emailServiceName'), 'AzureManagedDomain'), '2023-04-01').mailFromSenderDomain)]"
-                        }
-                      ],
+                      "env": "[concat(createArray(createObject('name', 'ASPNETCORE_URLS', 'value', 'http://+:8080'), createObject('name', 'DatabasePath', 'value', format('{0}/estimator.db', variables('dataMountPath'))), createObject('name', 'ESTIMATOR_LOGS_PATH', 'value', format('{0}/logs', variables('dataMountPath'))), createObject('name', 'AzureEmailService__ConnectionString', 'secretRef', 'acs-connection-string'), createObject('name', 'AzureEmailService__SenderAddress', 'value', format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', variables('emailServiceName'), 'AzureManagedDomain'), '2023-04-01').mailFromSenderDomain))), if(empty(parameters('xebiaAppClientSecret')), createArray(), createArray(createObject('name', 'AzureAd__ClientCredentials__0__SourceType', 'value', 'ClientSecret'), createObject('name', 'AzureAd__ClientCredentials__0__ClientSecret', 'secretRef', 'azure-ad-client-secret'))))]",
                       "volumeMounts": [
                         {
                           "volumeName": "[variables('storageMountName')]",

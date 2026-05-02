@@ -13,6 +13,10 @@ param location string
 @description('Full ARM resource ID of the user-assigned managed identity attached to the Container App. The MI typically lives in a different resource group (and may be in a different subscription) from the app itself; the federated credential trusting it is configured on the Xebia app registration. Microsoft.Identity.Web uses this MI for SignedAssertionFromManagedIdentity, exchanging an MI token for a confidential-client assertion against Xebia Entra.')
 param userAssignedIdentityResourceId string
 
+@secure()
+@description('Client secret for the Xebia app registration, used as a fallback when the federated managed-identity flow is blocked by the Xebia tenant\'s cross-tenant access policy (AADSTS700236). When set, the app overrides AzureAd:ClientCredentials[0] from appsettings.json to use this secret instead of the federated MI assertion. Empty string disables the override and the app falls back to the appsettings.json default.')
+param xebiaAppClientSecret string
+
 var tags = { 'azd-env-name': environmentName }
 
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
@@ -29,6 +33,7 @@ module resources 'resources.bicep' = {
     location: location
     tags: tags
     userAssignedIdentityResourceId: userAssignedIdentityResourceId
+    xebiaAppClientSecret: xebiaAppClientSecret
   }
 }
 
