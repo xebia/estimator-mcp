@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.41.2.15936",
-      "templateHash": "7908981802820907503"
+      "version": "0.42.1.51946",
+      "templateHash": "14298835994360038678"
     }
   },
   "parameters": {
@@ -22,6 +22,13 @@
       "minLength": 1,
       "metadata": {
         "description": "Primary Azure region for all resources"
+      }
+    },
+    "userAssignedIdentityResourceId": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Full ARM resource ID of the user-assigned managed identity attached to the Container App. The MI typically lives in a different resource group (and may be in a different subscription) from the app itself; the federated credential trusting it is configured on the Xebia app registration. Microsoft.Identity.Web uses this MI for SignedAssertionFromManagedIdentity, exchanging an MI token for a confidential-client assertion against Xebia Entra."
       }
     }
   },
@@ -57,6 +64,9 @@
           },
           "tags": {
             "value": "[variables('tags')]"
+          },
+          "userAssignedIdentityResourceId": {
+            "value": "[parameters('userAssignedIdentityResourceId')]"
           }
         },
         "template": {
@@ -65,8 +75,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.41.2.15936",
-              "templateHash": "16918678003988289060"
+              "version": "0.42.1.51946",
+              "templateHash": "3972529687360580075"
             }
           },
           "parameters": {
@@ -84,6 +94,12 @@
             },
             "tags": {
               "type": "object"
+            },
+            "userAssignedIdentityResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Full ARM resource ID of the pre-existing user-assigned managed identity to attach to the Container App. See main.bicep for context on how this MI is used."
+              }
             }
           },
           "variables": {
@@ -243,6 +259,12 @@
               "name": "[variables('containerAppName')]",
               "location": "[parameters('location')]",
               "tags": "[union(parameters('tags'), createObject('azd-service-name', 'web'))]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', parameters('userAssignedIdentityResourceId'))]": {}
+                }
+              },
               "properties": {
                 "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', variables('containerAppsEnvName'))]",
                 "configuration": {

@@ -6,6 +6,9 @@ param location string
 
 param tags object
 
+@description('Full ARM resource ID of the pre-existing user-assigned managed identity to attach to the Container App. See main.bicep for context on how this MI is used.')
+param userAssignedIdentityResourceId string
+
 // ── Naming ────────────────────────────────────────────────────────────────────
 
 var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
@@ -147,6 +150,12 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: containerAppName
   location: location
   tags: union(tags, { 'azd-service-name': 'web' })
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userAssignedIdentityResourceId}': {}
+    }
+  }
   properties: {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {

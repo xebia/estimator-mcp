@@ -9,6 +9,10 @@ param environmentName string
 @description('Primary Azure region for all resources')
 param location string
 
+@minLength(1)
+@description('Full ARM resource ID of the user-assigned managed identity attached to the Container App. The MI typically lives in a different resource group (and may be in a different subscription) from the app itself; the federated credential trusting it is configured on the Xebia app registration. Microsoft.Identity.Web uses this MI for SignedAssertionFromManagedIdentity, exchanging an MI token for a confidential-client assertion against Xebia Entra.')
+param userAssignedIdentityResourceId string
+
 var tags = { 'azd-env-name': environmentName }
 
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
@@ -24,6 +28,7 @@ module resources 'resources.bicep' = {
     environmentName: environmentName
     location: location
     tags: tags
+    userAssignedIdentityResourceId: userAssignedIdentityResourceId
   }
 }
 
