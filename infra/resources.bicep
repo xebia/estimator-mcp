@@ -6,6 +6,13 @@ param location string
 
 param tags object
 
+@description('Full ARM resource ID of the pre-existing user-assigned managed identity to attach to the Container App. See main.bicep for context on how this MI is used.')
+param userAssignedIdentityResourceId string
+
+@secure()
+@description('Optional client secret for the Xebia app registration. See main.bicep. Empty string disables the override.')
+param xebiaAppClientSecret string
+
 // ── Naming ────────────────────────────────────────────────────────────────────
 
 var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
@@ -147,6 +154,12 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: containerAppName
   location: location
   tags: union(tags, { 'azd-service-name': 'web' })
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userAssignedIdentityResourceId}': {}
+    }
+  }
   properties: {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {
@@ -163,10 +176,15 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           passwordSecretRef: 'acr-password'
         }
       ]
-      secrets: [
-        { name: 'acr-password',          value: acrPassword }
-        { name: 'acs-connection-string', value: acsConnectionString }
-      ]
+      secrets: concat(
+        [
+          { name: 'acr-password',          value: acrPassword }
+          { name: 'acs-connection-string', value: acsConnectionString }
+        ],
+        empty(xebiaAppClientSecret) ? [] : [
+          { name: 'azure-ad-client-secret', value: xebiaAppClientSecret }
+        ]
+      )
     }
     template: {
       volumes: [
@@ -184,13 +202,23 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json('0.5')
             memory: '1Gi'
           }
-          env: [
-            { name: 'ASPNETCORE_URLS',                     value: 'http://+:8080' }
-            { name: 'DatabasePath',                        value: '${dataMountPath}/estimator.db' }
-            { name: 'ESTIMATOR_LOGS_PATH',                 value: '${dataMountPath}/logs' }
-            { name: 'AzureEmailService__ConnectionString', secretRef: 'acs-connection-string' }
-            { name: 'AzureEmailService__SenderAddress',    value: acsSenderAddress }
-          ]
+          env: concat(
+            [
+              { name: 'ASPNETCORE_URLS',                     value: 'http://+:8080' }
+              { name: 'DatabasePath',                        value: '${dataMountPath}/estimator.db' }
+              { name: 'ESTIMATOR_LOGS_PATH',                 value: '${dataMountPath}/logs' }
+              { name: 'AzureEmailService__ConnectionString', secretRef: 'acs-connection-string' }
+              { name: 'AzureEmailService__SenderAddress',    value: acsSenderAddress }
+            ],
+            // When xebiaAppClientSecret is provided, override AzureAd:ClientCredentials[0]
+            // from appsettings.json (which configures SignedAssertionFromManagedIdentity)
+            // to use a ClientSecret instead. This is the fallback path while AADSTS700236
+            // (cross-tenant FIC blocked) is unresolved.
+            empty(xebiaAppClientSecret) ? [] : [
+              { name: 'AzureAd__ClientCredentials__0__SourceType',   value: 'ClientSecret' }
+              { name: 'AzureAd__ClientCredentials__0__ClientSecret', secretRef: 'azure-ad-client-secret' }
+            ]
+          )
           volumeMounts: [
             {
               volumeName: storageMountName

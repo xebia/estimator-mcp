@@ -6,8 +6,20 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row px-4 d-flex justify-content-between align-items-center">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <AuthorizeView>
+                <Authorized>
+                    <span>
+                        Signed in as <strong>@context.User.Identity?.Name</strong>
+                        &middot;
+                        <a href="MicrosoftIdentity/Account/SignOut">Sign out</a>
+                    </span>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="MicrosoftIdentity/Account/SignIn">Sign in</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">

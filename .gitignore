@@ -483,3 +483,12 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 .claude/settings.local.json
+
+# SQLite databases (runtime data; never committed)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# ASP.NET Core Data Protection keys (sensitive; environment-specific)
+**/DataProtection-Keys/
