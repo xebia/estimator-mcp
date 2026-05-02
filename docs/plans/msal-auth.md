@@ -168,8 +168,8 @@ Goal: a real Copilot Studio agent in Xebia M365 calls `/mcp` successfully. This 
 - [x] Deploy the Phase 3 build to the Container App (`azd up` after setting Bicep params via `azd env config set`).
 - [x] Add `https://{fqdn}/signin-oidc` to the Xebia app registration redirect URIs.
 - [x] Browser sign-in test against the deployed URL — confirmed working (logs show 200 on token endpoint, no exceptions).
-- [ ] In Copilot Studio: register the MCP server, point it at `https://ca-xsludqqyumyme.prouddesert-77f66edd.centralus.azurecontainerapps.io/mcp`, supply the OAuth scope `api://32c976ae-e874-4126-b2d8-10bc99ae9330/access_as_user`.
-- [ ] Trigger a tool call from the agent. Confirm 200s in the app logs.
+- [x] In Copilot Studio: register the MCP server, point it at `https://ca-xsludqqyumyme.prouddesert-77f66edd.centralus.azurecontainerapps.io/mcp`, supply the OAuth scope `api://32c976ae-e874-4126-b2d8-10bc99ae9330/access_as_user`. Used **manual OAuth** (Entra doesn't support Dynamic Client Registration); see `docs/copilot-studio-setup.md` for the per-developer onboarding.
+- [x] Trigger a tool call from the agent. Confirmed: `Client (mcs 1.0.0) method 'tools/call' get_instructions completed. IsError = False` in container logs. Full handshake (`initialize` → `tools/list` → `tools/call`) succeeded.
 
 **Code (Claude), already addressed during Phase 4 deploy:**
 - [x] `UseForwardedHeaders` middleware so PRM `resource` and OIDC redirect URLs are emitted as `https://` (Container Apps' ingress terminates TLS).
