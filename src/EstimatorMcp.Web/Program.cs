@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
@@ -105,6 +106,19 @@ try
     // Lets <AuthorizeView> work inside Blazor components.
     builder.Services.AddCascadingAuthenticationState();
 
+    // Honor X-Forwarded-Proto / X-Forwarded-For from the Container Apps ingress so that
+    // Request.Scheme reflects the public-facing protocol (https) rather than the internal
+    // hop (http). Without this, generated URLs (e.g. PRM resource, OIDC redirect_uri,
+    // resource_metadata) come out as http:// and break spec-compliant clients. Trust
+    // all proxies here — only the Container Apps ingress can reach the pod, so widening
+    // the trust boundary is safe.
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+
     // Microsoft.Identity.Web.UI ships embedded MVC controllers at
     // /MicrosoftIdentity/Account/SignIn and /SignOut.
     builder.Services.AddControllersWithViews()
@@ -131,6 +145,10 @@ try
         await DbSeeder.SeedFromJsonIfEmptyAsync(scope.ServiceProvider, builder.Configuration);
     }
 
+    // ForwardedHeaders must run very early so that downstream middleware (HTTPS redirect,
+    // OIDC redirect-URI generation, our PRM middleware) sees the correct scheme/host.
+    app.UseForwardedHeaders();
+
     if (app.Environment.IsDevelopment())
     {
         app.UseDeveloperExceptionPage();
@@ -142,7 +160,16 @@ try
     }
 
     app.UseRequestLocalization("en-US");
-    app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
+    // Status-code pages re-execute the request to /not-found and produce HTML, which is
+    // wrong for /mcp and /api callers — they need clean 401/404 responses with their
+    // original headers (e.g. WWW-Authenticate). Skip the rewrite for those paths.
+    app.UseWhen(
+        ctx => !ctx.Request.Path.StartsWithSegments("/mcp")
+            && !ctx.Request.Path.StartsWithSegments("/api")
+            && !ctx.Request.Path.StartsWithSegments("/.well-known"),
+        branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
+
     app.UseHttpsRedirection();
     app.UseStaticFiles();
 
