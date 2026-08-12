@@ -1,0 +1,29 @@
+<Project>
+
+  <!--
+    Semantic version for the whole repo. This is the single place the version
+    number is written by hand.
+
+    To release: bump VersionPrefix here, merge, then push a matching tag
+    (`git tag v0.2.0 && git push origin v0.2.0`). The release workflow refuses
+    to run if the tag and this value disagree, so the two cannot drift.
+
+    See VERSIONING.md for what counts as a major, minor, or patch change.
+  -->
+
+  <PropertyGroup>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <!-- VersionSuffix is supplied by the release workflow for prerelease tags
+         (e.g. v0.2.0-rc.1 builds with VersionSuffix=rc.1). Empty for stable. -->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Product>Estimator MCP</Product>
+    <Company>Xebia</Company>
+    <!-- CI passes SourceRevisionId=<sha>, which the SDK appends to
+         InformationalVersion as "+<sha>" so a deployed build is traceable
+         to the exact commit. -->
+    <IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+</Project>

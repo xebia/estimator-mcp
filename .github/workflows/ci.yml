@@ -28,8 +28,12 @@ jobs:
       - name: Restore
         run: dotnet restore estimator-mcp.slnx
 
+      # SourceRevisionId lands in InformationalVersion as "+<sha>", so any build
+      # artifact traces back to the exact commit. See VERSIONING.md.
       - name: Build
-        run: dotnet build estimator-mcp.slnx -c Release --no-restore
+        run: >
+          dotnet build estimator-mcp.slnx -c Release --no-restore
+          -p:SourceRevisionId=${{ github.sha }}
 
       - name: Test
         run: >
