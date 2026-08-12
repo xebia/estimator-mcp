@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\EstimatorMcp.Models\EstimatorMcp.Models.csproj" />
     <ProjectReference Include="..\..\src\CatalogCli\CatalogCli.csproj" />
+    <ProjectReference Include="..\..\src\EstimatorMcp.Web\EstimatorMcp.Web.csproj" />
   </ItemGroup>
 
 </Project>

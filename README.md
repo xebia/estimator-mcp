@@ -6,6 +6,8 @@ A Model Context Protocol (MCP) server system for generating software project tim
 
 **Key Goal:** Enable AI-assisted project estimation by managing a catalog of features mapped to implementation roles with effort estimates, then serving those estimates via MCP tools to LLM-based interfaces.
 
+**Versioning:** This project follows semantic versioning — see [VERSIONING.md](VERSIONING.md) for what counts as a breaking change to the MCP tool surface.
+
 ## Project Structure
 
 ```
@@ -39,6 +41,7 @@ This is the deployed product: a single ASP.NET Core app that serves the MCP endp
 3. **`GetCatalogTechStacks`** - Returns available tech stacks with their roles and feature counts
 4. **`GetRolesForTechStack`** - Returns the roles available for a given tech stack, including global roles
 5. **`CalculateEstimate`** - Accepts features with T-shirt sizes, returns detailed per-role hour breakdowns
+6. **`GetServerVersion`** - Returns the server's semantic version and commit, plus the catalog's schema version and timestamp, so an agent can tell whether the server or its data has changed
 
 **Features:**
 - Streamable HTTP transport, so any remote-capable MCP client can connect
