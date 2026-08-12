@@ -14,4 +14,7 @@
     <Project Path="src/EstimatorMcp.Models/EstimatorMcp.Models.csproj" />
     <Project Path="src/EstimatorMcp.Web/EstimatorMcp.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EstimatorMcp.Tests/EstimatorMcp.Tests.csproj" />
+  </Folder>
 </Solution>
