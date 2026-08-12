@@ -19,7 +19,7 @@
 3. Roles should have seniority levels (like junior, mid-level, senior) that impact the time necessary - like a multiplier based on the level of the resource
     - base level role should be "mid-level"
     - add columns for multipliers for junior and senior
-4. Update [instructions.md](/src/estimator-mcp/data/instructions.md) file with specific procedures the AI should follow
+4. Update [instructions.md](/src/EstimatorMcp.Web/content/instructions.md) file with specific procedures the AI should follow
 5. Roles per techstack
     - Different roles for different techstacks (i.e. Salesforce Architect vs .NET Architect)
     - Need to know which roles apply to which techstacks

@@ -10,7 +10,6 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/CatalogCli/CatalogCli.csproj" />
-    <Project Path="src/estimator-mcp/estimator-mcp.csproj" />
     <Project Path="src/EstimatorMcp.Models/EstimatorMcp.Models.csproj" />
     <Project Path="src/EstimatorMcp.Web/EstimatorMcp.Web.csproj" />
   </Folder>

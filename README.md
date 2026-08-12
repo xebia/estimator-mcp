@@ -17,46 +17,52 @@ estimator-mcp/
 │   └── innovation.md              # Innovation and future ideas
 ├── docs/                          # Additional documentation
 │   └── plans/                     # Technical planning documents
-└── src/                           # Source code
-    ├── estimator-mcp/             # MCP Server (stdio transport)
-    ├── CatalogEditor/             # Blazor Web App for catalog management
-    ├── CatalogCli/                # CLI tool for bulk TSV import/export
-    └── EstimatorMcp.Models/       # Shared data models
+├── src/                           # Source code
+│   ├── EstimatorMcp.Web/          # Deployed app: HTTP MCP endpoint + Blazor catalog UI
+│   ├── CatalogEditor/             # Standalone Blazor catalog editor (JSON storage)
+│   ├── CatalogCli/                # CLI tool for bulk TSV import/export
+│   └── EstimatorMcp.Models/       # Shared data models
+└── tests/                         # Unit tests
 ```
 
 ## Components
 
-### 1. MCP Server (estimator-mcp)
+### 1. MCP Server (EstimatorMcp.Web)
 
 **Status:** ✅ Fully Implemented
 
-The core MCP server runs via stdio transport and exposes three tools to LLM interfaces:
+This is the deployed product: a single ASP.NET Core app that serves the MCP endpoint over HTTP at **`/mcp`** and hosts the Blazor catalog UI. There is no stdio server — the solution is HTTP-only.
 
 **MCP Tools:**
 1. **`GetInstructions`** - Returns markdown guidance for AI assistants on how to conduct estimation interviews
 2. **`GetCatalogFeatures`** - Returns catalog features, filterable by category, tech stack, or tags
-3. **`CalculateEstimate`** - Accepts features with T-shirt sizes, returns detailed per-role hour breakdowns
+3. **`GetCatalogTechStacks`** - Returns available tech stacks with their roles and feature counts
+4. **`GetRolesForTechStack`** - Returns the roles available for a given tech stack, including global roles
+5. **`CalculateEstimate`** - Accepts features with T-shirt sizes, returns detailed per-role hour breakdowns
 
 **Features:**
-- Stdio transport for Claude Desktop integration
-- Serilog file-only logging (no console output to avoid protocol interference)
-- Automatic loading of latest timestamped catalog file
+- Streamable HTTP transport, so any remote-capable MCP client can connect
+- OAuth-protected per the MCP authorization spec — see [`docs/auth-architecture.md`](docs/auth-architecture.md)
+- Catalog served from SQLite via `ICatalogDataProvider`, the same source the UI edits
 - Tech stack and tag-based filtering
 - Fibonacci scaling for T-shirt sizes (XS, S, M, L, XL)
 - Copilot productivity multipliers applied per role
 
 **Technology Stack:**
 - .NET 10 with nullable reference types
-- ModelContextProtocol NuGet package (0.5.0-preview.1)
-- Dependency Injection for configuration and services
-- File-based logging with Serilog
+- `ModelContextProtocol.AspNetCore`
+- EF Core + SQLite for catalog storage
+- Microsoft.Identity.Web for Entra OIDC (UI) and JWT bearer (`/mcp`)
+- Serilog
 
-**Running the Server:**
+**Running Locally:**
 ```bash
-cd src/estimator-mcp
-dotnet build
+cd src/EstimatorMcp.Web
 dotnet run
+# MCP endpoint at http://localhost:<port>/mcp, catalog UI at the site root
 ```
+
+**Deployment:** Azure Container Apps via `azd deploy` (see [`azure.yaml`](azure.yaml) and the `Dockerfile`).
 
 ### 2. Catalog Editor (CatalogEditor)
 
@@ -143,21 +149,21 @@ The Catalog Editor uses a provider pattern to abstract data access:
 
 ### Prerequisites
 - .NET 10 SDK or later
-- (Optional) Claude Desktop for MCP integration
+- (Optional) An MCP client that supports remote/HTTP servers, for MCP integration
 - (Optional) Excel or compatible spreadsheet app for CLI bulk editing
 
 ### Quick Start
 
-**Option 1: Use the MCP Server with Claude Desktop**
-1. Build the MCP server:
+**Option 1: Run the MCP Server**
+1. Start the app:
    ```bash
-   cd src/estimator-mcp
-   dotnet build
+   cd src/EstimatorMcp.Web
+   dotnet run
    ```
 
-2. Configure Claude Desktop to use the server (see [MCP Integration](#mcp-integration) below)
+2. Point your MCP client at `/mcp` on that host (see [MCP Integration](#mcp-integration) below)
 
-3. Ask Claude to help estimate a project - it will use the MCP tools automatically
+3. Ask your assistant to help estimate a project - it will use the MCP tools automatically
 
 **Option 2: Manage Catalog via Web UI**
 ```bash
@@ -242,35 +248,25 @@ GetCatalogFeatures(tag: "authentication")
 
 ## MCP Integration
 
-The MCP server integrates with Claude Desktop via the stdio transport protocol.
+The server speaks MCP over **streamable HTTP** at `/mcp`. Any MCP client that supports remote servers can connect; there is no stdio transport and no local build required to consume it.
 
-### Claude Desktop Configuration
+### Connecting a client
 
-Add to your Claude Desktop config file (`claude_desktop_config.json`):
+Point the client at the `/mcp` path of a running instance:
 
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Deployed:** `https://<container-app-host>/mcp`
+- **Local:** `http://localhost:<port>/mcp`
 
-```json
-{
-  "mcpServers": {
-    "estimator": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "s:\\src\\xebia\\estimator-mcp\\src\\estimator-mcp\\estimator-mcp.csproj"
-      ],
-      "env": {
-        "ESTIMATOR_CATALOG_PATH": "s:\\src\\xebia\\estimator-mcp\\src\\CatalogEditor\\CatalogEditor\\CatalogEditor\\data\\catalogs"
-      }
-    }
-  }
-}
-```
+The endpoint is OAuth-protected and advertises its authorization server per the MCP authorization spec (RFC 9728), so a spec-compliant client discovers sign-in automatically rather than being configured out of band.
+
+- Wiring up a Copilot Studio agent: [`docs/copilot-studio-setup.md`](docs/copilot-studio-setup.md)
+- How the two auth flows fit together: [`docs/auth-architecture.md`](docs/auth-architecture.md)
+
+A client that only speaks stdio can still reach the server through a stdio-to-HTTP bridge such as `mcp-remote`.
 
 ### AI Workflow
 
-Once configured, Claude can:
+Once connected, the assistant can:
 
 1. **Call `GetInstructions`** to learn how to conduct estimation interviews
 2. **Call `GetCatalogFeatures`** to retrieve available features from catalog
@@ -315,13 +311,15 @@ Claude: [Calls CalculateEstimate with the selections]
 - ✅ Automatic catalog versioning (timestamp-based filenames)
 
 **Phase 2: MCP Server**
-- ✅ MCP Server implementation (stdio transport)
+- ✅ MCP Server implementation (streamable HTTP transport)
 - ✅ GetInstructions tool (AI guidance)
 - ✅ GetCatalogFeatures tool (catalog queries with filtering)
+- ✅ GetCatalogTechStacks and GetRolesForTechStack tools
 - ✅ CalculateEstimate tool (time breakdown per role/task)
-- ✅ Serilog file-only logging (stdio-safe)
 - ✅ Tech stack categorization
 - ✅ Tag-based organization and filtering
+- ✅ Entra OIDC for the UI, JWT bearer for `/mcp`
+- ✅ Deployed to Azure Container Apps
 
 **Phase 3: Bulk Editing**
 - ✅ CatalogCli tool for TSV import/export
@@ -403,19 +401,20 @@ Claude: [Calls CalculateEstimate with the selections]
 
 ### Logging
 
-The MCP server uses **Serilog with file-only logging** to avoid interfering with stdio transport:
-- Log location: `logs/estimator-mcp-{date}.log`
+The server uses **Serilog**, writing to console and to a rolling file:
+- Log location: `logs/estimator-web-{date}.log` (override with `ESTIMATOR_LOGS_PATH`)
 - Log level: Information (configurable)
-- No console output (would corrupt MCP protocol)
 
 ## Technology Stack
 
 - **.NET 10** with nullable reference types enabled
-- **ModelContextProtocol** NuGet package (0.5.0-preview.1)
+- **ModelContextProtocol.AspNetCore** - MCP over streamable HTTP
 - **Blazor** - InteractiveServer render mode
+- **EF Core + SQLite** - Catalog storage
+- **Microsoft.Identity.Web** - Entra OIDC and JWT bearer auth
 - **Serilog** - Structured logging
 - **Spectre.Console** - CLI formatting and validation
-- **Dependency Injection** - Microsoft.Extensions.DependencyInjection
+- **Central Package Management** - All NuGet versions in `Directory.Packages.props`
 
 ## Architecture Patterns
 
@@ -462,12 +461,12 @@ This is an internal Xebia project. For changes:
 ### Common Issues
 
 **MCP Server not connecting:**
-- Check Claude Desktop config file has correct paths
-- Verify `ESTIMATOR_CATALOG_PATH` points to catalog directory
-- Check logs: `src/estimator-mcp/logs/estimator-mcp-*.log`
+- Verify the client points at the `/mcp` path, not the site root
+- A 401 means the token is missing, has the wrong audience, or lacks the `access_as_user` scope - see [`docs/copilot-studio-setup.md`](docs/copilot-studio-setup.md)
+- Check logs: `src/EstimatorMcp.Web/logs/estimator-web-*.log`
 
 **Catalog not loading:**
-- Ensure catalog JSON file exists in configured directory
+- On first start the database is seeded from `catalog-{ISO8601_TIMESTAMP}.json`; ensure a seed file exists
 - Check filename format: `catalog-{ISO8601_TIMESTAMP}.json`
 - Verify JSON is valid (use JSON validator)
 

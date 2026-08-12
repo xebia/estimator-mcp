@@ -10,11 +10,12 @@ Estimator MCP is a Model Context Protocol (MCP) server system for generating sof
 
 ## Build & Run Commands
 
-### MCP Server
+### MCP Server + Catalog UI (EstimatorMcp.Web)
 ```bash
-cd src/estimator-mcp
+cd src/EstimatorMcp.Web
 dotnet build
 dotnet run
+# MCP endpoint at /mcp, Blazor catalog UI at the site root
 ```
 
 ### Catalog Editor (Blazor Web App)
@@ -50,13 +51,14 @@ dotnet run -- migrate -i catalog-v1.json -o catalog-v2.json
 ```
 estimator-mcp/
 ├── src/
-│   ├── estimator-mcp/              # MCP Server (stdio transport)
-│   │   ├── Program.cs              # Host setup with Serilog (file-only logging)
+│   ├── EstimatorMcp.Web/           # MCP endpoint (HTTP) + Blazor catalog UI; the deployed app
+│   │   ├── Program.cs              # Host setup: auth, EF Core, MapMcp, Serilog
 │   │   ├── Tools/
 │   │   │   ├── InstructionsTool.cs # Returns AI assistant instructions
-│   │   │   ├── CatalogTool.cs      # Returns catalog features
+│   │   │   ├── CatalogTool.cs      # Catalog features, tech stacks, roles
 │   │   │   └── CalculateEstimateTool.cs # Calculates estimates
-│   │   └── data/
+│   │   ├── Services/               # DbCatalogDataProvider, auth services
+│   │   └── content/
 │   │       └── instructions.md     # AI assistant guidance document
 │   ├── EstimatorMcp.Models/        # Shared data models
 │   │   ├── CatalogData.cs          # Root catalog structure
@@ -76,15 +78,17 @@ estimator-mcp/
 ```
 
 ### MCP Tools
-The server exposes three tools via stdio transport:
+The server exposes five tools over streamable HTTP at `/mcp`:
 
 1. **`GetInstructions`** - Returns markdown guidance for AI on how to use the server
-2. **`GetCatalogFeatures`** - Returns catalog features, optionally filtered by category
-3. **`CalculateEstimate`** - Accepts features with T-shirt sizes, returns per-role hour breakdowns
+2. **`GetCatalogFeatures`** - Returns catalog features, optionally filtered by category, tech stack, or tags
+3. **`GetCatalogTechStacks`** - Returns tech stacks with roles and feature counts
+4. **`GetRolesForTechStack`** - Returns tech-stack-specific plus global roles
+5. **`CalculateEstimate`** - Accepts features with T-shirt sizes, returns per-role hour breakdowns
 
 ### Data Flow
-- Catalog stored as JSON files: `catalog-{ISO8601_TIMESTAMP}.json`
-- Latest file loaded at startup (lexicographic sort on filename)
+- Catalog served from SQLite via `ICatalogDataProvider`, the same store the Blazor UI edits
+- Seeded on first start from `catalog-{ISO8601_TIMESTAMP}.json` files (latest wins, lexicographic sort)
 - Estimates calculated: `(MediumHours × SizeMultiplier) × CopilotMultiplier`
 
 ### T-Shirt Sizing (Fibonacci Scaling)
@@ -100,13 +104,14 @@ Per-role multiplier applied to all estimates:
 ## Configuration
 
 ### Environment Variables
-- `ESTIMATOR_DATA_PATH` - Path to data directory (instructions.md)
-- `ESTIMATOR_CATALOG_PATH` - Path to catalog JSON files
+- `DatabasePath` - SQLite database path (also determines the Data Protection key directory)
+- `CatalogSeedPath` - Override for the first-start catalog seed location
 - `ESTIMATOR_LOGS_PATH` - Path for log files (default: `logs/`)
+- `AzureAd:*` - Entra app registration settings (see `docs/auth-architecture.md`)
 - `CatalogDataPath` - Catalog Editor data path
 
 ### Logging
-MCP server uses Serilog with **file-only logging** (no console output to avoid interfering with stdio transport). Logs written to `logs/estimator-mcp-{date}.log`.
+Serilog writes to console and to `logs/estimator-web-{date}.log`.
 
 ## Technology Standards
 
@@ -150,7 +155,8 @@ For specifications and data schemas, see the `spec/` folder:
 
 ## Important Notes
 
-- MCP server runs via stdio - **no console logging** (would corrupt protocol)
-- Catalog files are versioned by timestamp filename, old files preserved
+- MCP is served over HTTP at `/mcp` - there is no stdio transport, so console logging is fine
+- `/mcp` and `/api/catalog/*` are pinned to the `BearerOnly` policy so unauthenticated callers get a 401, not a login redirect
+- Catalog seed files are versioned by timestamp filename, old files preserved
 - All sizes derive from Medium baseline - only store M estimates
 - Tool descriptions are critical - they guide LLM behavior
