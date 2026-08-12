@@ -37,10 +37,9 @@ updates:
           - "xunit*"
           - "Microsoft.NET.Test.Sdk"
     ignore:
-      # The MCP SDK jump (0.5.0-preview.1 and 1.1.0 -> 2.x) spans two major
-      # versions with breaking API changes, and is tracked as its own piece of
-      # work. Minor and patch updates still flow. Delete this block when that
-      # migration happens.
+      # ModelContextProtocol.AspNetCore 1.1.0 -> 2.x is a breaking major and is
+      # tracked as its own piece of work. Minor and patch updates still flow.
+      # Delete this block when that migration happens.
       - dependency-name: "ModelContextProtocol*"
         update-types: ["version-update:semver-major"]
 
