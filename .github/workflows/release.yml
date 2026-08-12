@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  release:
+    name: Verify and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      # A tag that disagrees with Directory.Build.props would publish a
+      # mislabelled release, so fail loudly instead. Splits v1.2.3-rc.1 into
+      # core (1.2.3) and suffix (rc.1); only the core must match VersionPrefix.
+      - name: Check tag matches VersionPrefix
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          core="${tag%%-*}"
+          suffix=""
+          if [ "$core" != "$tag" ]; then
+            suffix="${tag#*-}"
+          fi
+
+          prefix=$(grep -oPm1 '(?<=<VersionPrefix>)[^<]+' Directory.Build.props)
+          echo "tag=$tag  core=$core  suffix=$suffix  VersionPrefix=$prefix"
+
+          if [ "$core" != "$prefix" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME implies version $core but Directory.Build.props declares $prefix. Bump VersionPrefix and re-tag."
+            exit 1
+          fi
+
+          echo "suffix=$suffix" >> "$GITHUB_OUTPUT"
+          if [ -n "$suffix" ]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restore
+        run: dotnet restore estimator-mcp.slnx
+
+      - name: Build
+        run: >
+          dotnet build estimator-mcp.slnx -c Release --no-restore
+          -p:VersionSuffix=${{ steps.version.outputs.suffix }}
+          -p:SourceRevisionId=${{ github.sha }}
+
+      - name: Test
+        run: dotnet test estimator-mcp.slnx -c Release --no-build
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME"
+          --title "$GITHUB_REF_NAME"
+          --generate-notes
+          ${{ steps.version.outputs.prerelease == 'true' && '--prerelease' || '' }}

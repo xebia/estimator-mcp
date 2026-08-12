@@ -78,13 +78,16 @@ estimator-mcp/
 ```
 
 ### MCP Tools
-The server exposes five tools over streamable HTTP at `/mcp`:
+The server exposes six tools over streamable HTTP at `/mcp`:
 
 1. **`GetInstructions`** - Returns markdown guidance for AI on how to use the server
 2. **`GetCatalogFeatures`** - Returns catalog features, optionally filtered by category, tech stack, or tags
 3. **`GetCatalogTechStacks`** - Returns tech stacks with roles and feature counts
 4. **`GetRolesForTechStack`** - Returns tech-stack-specific plus global roles
 5. **`CalculateEstimate`** - Accepts features with T-shirt sizes, returns per-role hour breakdowns
+6. **`GetServerVersion`** - Returns server semantic version + commit and catalog schema version + timestamp
+
+Versioning policy for the tool surface: [VERSIONING.md](VERSIONING.md). Version number lives in `Directory.Build.props`.
 
 ### Data Flow
 - Catalog served from SQLite via `ICatalogDataProvider`, the same store the Blazor UI edits

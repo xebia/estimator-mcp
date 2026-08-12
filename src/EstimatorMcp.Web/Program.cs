@@ -133,7 +133,8 @@ try
         .WithHttpTransport()
         .WithTools<InstructionsTool>()
         .WithTools<CatalogTool>()
-        .WithTools<CalculateEstimateTool>();
+        .WithTools<CalculateEstimateTool>()
+        .WithTools<VersionTool>();
 
     var app = builder.Build();
 
