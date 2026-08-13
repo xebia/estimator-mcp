@@ -34,7 +34,7 @@ public class ExportCommand : AsyncCommand<ExportCommand.Settings>
         }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var (serverUrl, token) = CliConfig.Resolve(settings.Server, settings.Token);
 

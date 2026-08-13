@@ -18,7 +18,7 @@ public class ConfigureCommand : Command<ConfigureCommand.Settings>
         public string? Token { get; set; }
     }
 
-    public override int Execute(CommandContext context, Settings settings)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var config = CliConfig.Load();
 

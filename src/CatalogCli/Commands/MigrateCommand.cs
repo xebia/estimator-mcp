@@ -34,7 +34,7 @@ public class MigrateCommand : Command<MigrateCommand.Settings>
         }
     }
 
-    public override int Execute(CommandContext context, Settings settings)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         if (!File.Exists(settings.InputPath))
         {
