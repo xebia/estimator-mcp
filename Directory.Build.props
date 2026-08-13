@@ -12,7 +12,7 @@
   -->
 
   <PropertyGroup>
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionPrefix>0.2.0</VersionPrefix>
     <!-- VersionSuffix is supplied by the release workflow for prerelease tags
          (e.g. v0.2.0-rc.1 builds with VersionSuffix=rc.1). Empty for stable. -->
   </PropertyGroup>

@@ -129,8 +129,12 @@ try
         .AddInteractiveServerComponents();
 
     // MCP Server (HTTP/Streamable transport via MapMcp)
+    // Stateless defaults to true from SDK 2.0. Pinned to false here to preserve the
+    // session-per-client behaviour this server shipped with on 1.x — the SDK upgrade
+    // and a change in session semantics are separate decisions, and only one of them
+    // is being made here. See docs/plans/mcp-sdk-2x.md.
     builder.Services.AddMcpServer()
-        .WithHttpTransport()
+        .WithHttpTransport(options => options.Stateless = false)
         .WithTools<InstructionsTool>()
         .WithTools<CatalogTool>()
         .WithTools<CalculateEstimateTool>()
